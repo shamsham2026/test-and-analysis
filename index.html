@@ -130,9 +130,9 @@
       <!-- 步驟 2：選擇該年級的課題單元 -->
       <div>
         <label id="moduleSectionTitle" class="block text-sm font-bold text-slate-800 mb-3">
-          2. 選取課題單元 (Select Assessment Unit):
+          2. 選取小學六年級 (P6) 課題單元 (Select Assessment Unit):
         </label>
-        <div id="moduleCardContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div id="moduleCardContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-h-[120px]">
           <!-- 動態載入單元卡片 -->
         </div>
       </div>
@@ -868,6 +868,7 @@
 
     function showToast(msg, type = 'error') {
       const toast = document.getElementById('toastMessage');
+      if (!toast) return;
       toast.innerText = msg;
       toast.className = type === 'error' 
         ? 'block mb-6 p-4 rounded-xl text-sm font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-sm'
@@ -876,18 +877,19 @@
     }
 
     function hideToast() {
-      document.getElementById('toastMessage').className = 'hidden';
+      const toast = document.getElementById('toastMessage');
+      if (toast) toast.className = 'hidden';
     }
 
     function selectGrade(grade) {
-      currentGrade = grade;
+      currentGrade = grade || 'P6';
       hideToast();
 
       // 切換按鈕狀態
       document.querySelectorAll('.grade-tab-btn').forEach(btn => {
         btn.className = 'grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition';
       });
-      const activeTab = document.getElementById('tab_' + grade);
+      const activeTab = document.getElementById('tab_' + currentGrade);
       if (activeTab) {
         activeTab.className = 'grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-md transition';
       }
@@ -896,25 +898,37 @@
         'P1': '小學一年級 (P1)', 'P2': '小學二年級 (P2)', 'P3': '小學三年級 (P3)',
         'P4': '小學四年級 (P4)', 'P5': '小學五年級 (P5)', 'P6': '小學六年級 (P6)'
       };
-      document.getElementById('moduleSectionTitle').innerText = `2. 選取 ${gradeLabels[grade]} 課題單元 (Select Assessment Unit):`;
+      const titleElem = document.getElementById('moduleSectionTitle');
+      if (titleElem) {
+        titleElem.innerText = `2. 選取 ${gradeLabels[currentGrade] || currentGrade} 課題單元 (Select Assessment Unit):`;
+      }
 
       renderModuleCards();
     }
 
     function renderModuleCards() {
       const container = document.getElementById('moduleCardContainer');
-      const modules = CURRICULUM_DATA[currentGrade] || [];
-      if (modules.length > 0) currentSelectedModule = modules[0].key;
+      if (!container) return;
+
+      const modules = CURRICULUM_DATA[currentGrade] || CURRICULUM_DATA['P6'] || [];
+      if (modules.length > 0) {
+        // 如果目前選取的單元不屬於該年級，重置為該年級第一個單元
+        const exists = modules.some(m => m.key === currentSelectedModule);
+        if (!exists) {
+          currentSelectedModule = modules[0].key;
+        }
+      }
 
       let html = '';
       modules.forEach(m => {
-        const isSelected = m.key === currentSelectedModule;
+        const isSelected = (m.key === currentSelectedModule);
         html += `
           <div onclick="chooseModule('${m.key}')" id="mod_${m.key}" 
-               class="module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed ${
-                 isSelected ? 'border-blue-600 bg-blue-50/80 text-blue-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50'
+               class="module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed flex items-center justify-between ${
+                 isSelected ? 'border-blue-600 bg-blue-50/90 text-blue-900 shadow-sm font-bold' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50'
                }">
-            ${m.title}
+            <span>${m.title}</span>
+            <span class="${isSelected ? 'text-blue-600' : 'text-slate-300'} text-xs font-bold">${isSelected ? '● 已選取' : '○'}</span>
           </div>
         `;
       });
@@ -923,13 +937,7 @@
 
     function chooseModule(key) {
       currentSelectedModule = key;
-      document.querySelectorAll('.module-card').forEach(c => {
-        c.className = 'module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50';
-      });
-      const active = document.getElementById('mod_' + key);
-      if (active) {
-        active.className = 'module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed border-blue-600 bg-blue-50/80 text-blue-900 shadow-sm';
-      }
+      renderModuleCards();
     }
 
     function startAssessment() {
@@ -1353,9 +1361,15 @@
       showToast('✅ 成績報告文字已複製至剪貼簿！可直接貼在 WhatsApp 或 Google Classroom。', 'success');
     }
 
-    window.onload = function() {
+    function init() {
       selectGrade('P6');
-    };
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>
