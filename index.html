@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>香港小學數學科網上智能評估系統 | Primary Math Assessment (P1-P6)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:ital,wght@1,700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    /* 垂直分數樣式 (Vertical Fraction Layout) */
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.95em;
+      padding: 0 4px;
+      line-height: 1.05;
+    }
+    .frac > .num {
+      border-bottom: 1.8px solid #1e293b;
+      padding-bottom: 2px;
+      display: block;
+      font-weight: 600;
+    }
+    .frac > .den {
+      padding-top: 2px;
+      display: block;
+      font-weight: 600;
+    }
+
+    /* 數學常數 π 專用字型 */
+    .math-pi {
+      font-family: 'Noto Serif TC', "Cambria Math", "Times New Roman", serif;
+      font-style: italic;
+      font-weight: 700;
+      padding: 0 2px;
+    }
+
+    /* 列印與匯出專用排版 */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .app-container {
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen text-slate-800 p-3 sm:p-6 lg:p-8">
+  <div class="app-container max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-5 sm:p-8">
+    
+    <!-- 頂部標題列 -->
+    <header class="text-center pb-6 mb-6 border-b border-slate-100">
+      <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold mb-3 border border-blue-100">
+        <span>🎒 香港小學數學課程 • 小一至小六 (P1–P6) 全級在線評估</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">小學數學科智能評估與錯題跟進系統</h1>
+      <p class="text-sm sm:text-base text-slate-500 mt-2">
+        涵蓋 數 (N)、度量 (M)、圖形與空間 (S)、數據處理 (D)、代數 (A) • 20 題標準診斷
+      </p>
+    </header>
+
+    <!-- 提示訊息 Modal / Toast 容器 -->
+    <div id="toastMessage" class="hidden mb-6 p-4 rounded-xl text-sm font-medium transition-all duration-300"></div>
+
+    <!-- 1. 主選擇介面 (Selection Hub) -->
+    <section id="selectionHub" class="space-y-6">
+      
+      <!-- 學生個人資料填寫卡片 -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+          學生基本資料 (Student Information)
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="studentName">學生姓名 (Name) *</label>
+            <input type="text" id="studentName" placeholder="例如：陳小明" 
+                   class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="studentClass">班別 (Class)</label>
+            <input type="text" id="studentClass" placeholder="例如：6A / 5B" 
+                   class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="studentId">學號 (Class No.)</label>
+            <input type="text" id="studentId" placeholder="例如：15" 
+                   class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+          </div>
+        </div>
+      </div>
+
+      <!-- 步驟 1：選擇評估年級 -->
+      <div>
+        <label class="block text-sm font-bold text-slate-800 mb-3">
+          1. 點選評估年級 (Select Grade Level):
+        </label>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
+          <button type="button" onclick="selectGrade('P1')" id="tab_P1" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition">小一 (P1)</button>
+          <button type="button" onclick="selectGrade('P2')" id="tab_P2" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition">小二 (P2)</button>
+          <button type="button" onclick="selectGrade('P3')" id="tab_P3" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition">小三 (P3)</button>
+          <button type="button" onclick="selectGrade('P4')" id="tab_P4" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition">小四 (P4)</button>
+          <button type="button" onclick="selectGrade('P5')" id="tab_P5" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition">小五 (P5)</button>
+          <button type="button" onclick="selectGrade('P6')" id="tab_P6" class="grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-md transition">小六 (P6)</button>
+        </div>
+      </div>
+
+      <!-- 步驟 2：選擇該年級的課題單元 -->
+      <div>
+        <label id="moduleSectionTitle" class="block text-sm font-bold text-slate-800 mb-3">
+          2. 選取課題單元 (Select Assessment Unit):
+        </label>
+        <div id="moduleCardContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 動態載入單元卡片 -->
+        </div>
+      </div>
+
+      <!-- 開始測驗按鈕 -->
+      <button type="button" onclick="startAssessment()" 
+              class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base sm:text-lg font-bold rounded-xl shadow-lg shadow-blue-500/25 transition duration-200 flex items-center justify-center gap-2">
+        <span>🎯 開始 20 題標準測驗 (Start 20-Question Assessment)</span>
+      </button>
+    </section>
+
+    <!-- 2. 測驗作答進行介面 (Assessment Area) -->
+    <section id="assessmentArea" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div>
+          <span id="assessmentStatusText" class="font-bold text-blue-900 text-base">測驗進行中</span>
+          <p id="assessmentModuleSub" class="text-xs text-blue-700 mt-0.5"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="bg-blue-200/70 text-blue-900 font-semibold px-3 py-1 rounded-lg text-xs">共 20 題 • 滿分 100 分</span>
+        </div>
+      </div>
+
+      <div id="questionsContainer" class="space-y-5">
+        <!-- 動態渲染 20 道題目卡片 -->
+      </div>
+
+      <div class="pt-4 border-t border-slate-200">
+        <button type="button" onclick="submitAssessment()" 
+                class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-emerald-600/25 transition duration-200 flex items-center justify-center gap-2">
+          <span>📝 確認提交 20 題試卷 (Submit Assessment)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 結果與五大範疇診斷報告介面 (Result & Diagnostic Dashboard) -->
+    <section id="resultArea" class="hidden space-y-6">
+      
+      <!-- 總分卡片 -->
+      <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-2xl p-6 sm:p-8 text-center shadow-lg relative overflow-hidden">
+        <div class="relative z-10">
+          <span class="text-emerald-100 font-semibold text-sm uppercase tracking-wider">評估成績診斷結果</span>
+          <div id="scoreDisplay" class="text-4xl sm:text-5xl font-extrabold my-2 tracking-tight">-- / 100</div>
+          <div id="gradeBandDisplay" class="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm sm:text-base font-bold mt-1">--</div>
+          <div id="studentDetailTag" class="text-xs sm:text-sm text-emerald-100 mt-3 font-medium"></div>
+        </div>
+      </div>
+
+      <!-- 五大範疇得分率長條圖診斷 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <span class="text-xl">📊</span> 數學五大範疇掌握度診斷報告
+          </span>
+          <span class="text-xs font-normal text-slate-500">標準參照評估</span>
+        </h3>
+        <div id="strandAnalysisBars" class="space-y-4 my-5">
+          <!-- 動態長條圖 -->
+        </div>
+        <div id="diagnosticFeedbackBox" class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed">
+          <!-- 動態診斷建議 -->
+        </div>
+      </div>
+
+      <!-- 快捷行動按鈕 (錯題跟進練習 & 列印/複製成績) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print">
+        <button type="button" id="remediationActionBtn" onclick="launchRemediationQuiz()" 
+                class="hidden py-3.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm sm:text-base sm:col-span-3">
+          <span>💡 一按生成錯題跟進練習 (Generate Remediation Practice)</span>
+        </button>
+        <button type="button" onclick="window.print()" 
+                class="py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl text-sm transition flex items-center justify-center gap-2">
+          <span>🖨️ 列印 / 匯出 PDF</span>
+        </button>
+        <button type="button" onclick="copyReportText()" 
+                class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-sm transition border border-slate-200 flex items-center justify-center gap-2">
+          <span>📋 複製成績報告</span>
+        </button>
+        <button type="button" onclick="returnToSelectionHub()" 
+                class="py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition flex items-center justify-center gap-2">
+          <span>🔄 返回單元主頁</span>
+        </button>
+      </div>
+
+      <!-- 20 題詳細題解與步驟清單 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2 mb-4">
+          <span class="text-xl">🔍</span> 逐題批改詳情與步驟解析
+        </h3>
+        <div id="detailedReviewContainer" class="space-y-4">
+          <!-- 動態解析項目 -->
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <script>
+    /* =========================================================================
+     * 香港小學數學課程模組定義 (小一至小六 P1–P6 完整學習範疇綱要)
+     * ========================================================================= */
+    const CURRICULUM_DATA = {
+      'P1': [
+        { key: 'p1_all', title: '【小一全頁綜合評估】(20題涵蓋各範疇)' },
+        { key: 'p1_add_sub_18', title: '數 (N)：18以內的加法和不退位減法 (P1上)' },
+        { key: 'p1_num_100', title: '數 (N)：100以內的數與兩位數運算 (P1下)' },
+        { key: 'p1_time_money', title: '度量 (M)：香港硬幣換值與鐘面讀法 (時/半時)' },
+        { key: 'p1_shape_space', title: '圖形與空間 (S)：平面與立體圖形辨認及空間方位' }
+      ],
+      'P2': [
+        { key: 'p2_all', title: '【小二全頁綜合評估】(20題涵蓋各範疇)' },
+        { key: 'p2_mul_div', title: '數 (N)：九九乘法表與有餘數除法' },
+        { key: 'p2_3digit_calc', title: '數 (N)：3位數加減法 (含退位與進位)' },
+        { key: 'p2_measure_len', title: '度量 (M)：長度 (cm/m) 與貨幣找續應用' },
+        { key: 'p2_quad_dir', title: '圖形與空間 (S)：四邊形、角與東南西北' },
+        { key: 'p2_data_pict', title: '數據處理 (D)：象形圖分析 (一格代表1個單位)' }
+      ],
+      'P3': [
+        { key: 'p3_all', title: '【小三全頁綜合評估】(20題涵蓋各範疇)' },
+        { key: 'p3_four_ops', title: '數 (N)：四則混合運算與多位數乘除' },
+        { key: 'p3_frac_basic', title: '數 (N)：同分母分數比較與基礎概念' },
+        { key: 'p3_measure_units', title: '度量 (M)：容量 (L/mL)、重量 (g/kg) 與24小時制' },
+        { key: 'p3_tri_8dir', title: '圖形與空間 (S)：三角形分類與八個方向' },
+        { key: 'p3_data_block', title: '數據處理 (D)：方塊圖分析' }
+      ],
+      'P4': [
+        { key: 'p4_all', title: '【小四全頁綜合評估】(20題涵蓋各範疇)' },
+        { key: 'p4_frac_add_sub', title: '數 (N)：同分母分數加減法與假帶互化' },
+        { key: 'p4_dec_basic', title: '數 (N)：小數認識與小數加減運算' },
+        { key: 'p4_factor_multiple', title: '數 (N)：因數、倍數、公因數、公倍數與質數' },
+        { key: 'p4_perim_area', title: '度量 (M)：長方形與正方形周界與面積 (cm²/m²)' },
+        { key: 'p4_data_bar', title: '數據處理 (D)：棒形圖閱讀與分析' }
+      ],
+      'P5': [
+        { key: 'p5_all', title: '【小五全頁綜合評估】(20題涵蓋五大範疇)' },
+        { key: 'p5_frac_add_sub', title: '數 (N)：異分母分數加減法' },
+        { key: 'p5_frac_mul_div', title: '數 (N)：分數乘法與除法應用' },
+        { key: 'p5_dec_calc', title: '數 (N)：小數乘除法與四則混合運算' },
+        { key: 'p5_area_calc', title: '度量 (M)：平行四邊形、三角形與梯形面積' },
+        { key: 'p5_vol_measure', title: '度量 (M)：長方體/正方體體積與排水法' },
+        { key: 'p5_shape_dir', title: '圖形與空間 (S)：立體頂棱面與八個方向應用' },
+        { key: 'p5_avg_data', title: '數據處理 (D)：平均數與複合棒形圖分析' },
+        { key: 'p5_algebra_intro', title: '代數 (A)：代數符號與簡易方程解題' }
+      ],
+      'P6': [
+        { key: 'p6_all', title: '【小六全頁綜合評估】(20題涵蓋五大範疇)' },
+        { key: 'p6_pct_calc', title: '數 (N)：百分數互化、折扣、賺蝕與增減百分率' },
+        { key: 'p6_circle_measure', title: '度量 (M)：圓周與圓面積計算 (π 應用)' },
+        { key: 'p6_speed_graph', title: '度量 (M)：速率、時間、距離與行程問題' },
+        { key: 'p6_algebra_adv', title: '代數 (A)：兩步/括號簡易方程與文字應用題' },
+        { key: 'p6_data_graph', title: '數據處理 (D)：圓形圖、折線圖與加權平均' },
+        { key: 'p6_shape_symmetry', title: '圖形與空間 (S)：旋轉對稱與立體摺紙展開圖' }
+      ]
+    };
+
+    let currentGrade = 'P6';
+    let currentSelectedModule = 'p6_all';
+    let currentQuestions = [];
+    let currentReviewList = [];
+    let currentMistakes = [];
+    let inputModeMap = {}; // qId -> 'normal' | 'fraction'
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function gcd(a, b) {
+      return b === 0 ? a : gcd(b, a % b);
+    }
+
+    function lcm(a, b) {
+      return (a * b) / gcd(a, b);
+    }
+
+    /* LaTeX 數學排版與符號渲染器 */
+    function formatMath(str) {
+      if (!str && str !== 0) return '';
+      let text = String(str);
+
+      // 標準 π 符號置換
+      text = text.replace(/\\pi\b/g, '<span class="math-pi">π</span>');
+      text = text.replace(/\bPI\b/g, '<span class="math-pi">π</span>');
+      text = text.replace(/\\times/g, ' × ');
+      text = text.replace(/\\div/g, ' ÷ ');
+      text = text.replace(/\\text\{([^}]+)\}/g, '$1');
+      text = text.replace(/\\implies/g, ' ⇒ ');
+      text = text.replace(/\\%/g, '%');
+      text = text.replace(/\$/g, '');
+
+      // 帶分數垂直渲染
+      text = text.replace(/(\d+)\s*\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function(_, whole, num, den) {
+        return `<strong>${whole}</strong> <span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+      });
+
+      // 真/假分數垂直渲染
+      text = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function(_, num, den) {
+        return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+      });
+
+      return text;
+    }
+
+    function formatAnswerDisplay(ans) {
+      if (!ans && ans !== 0) return '<span class="text-slate-400 italic">未作答</span>';
+      let s = String(ans).trim();
+
+      const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+      if (mixed) {
+        return `<strong>${mixed[1]}</strong> <span class="frac"><span class="num">${mixed[2]}</span><span class="den">${mixed[3]}</span></span>`;
+      }
+
+      if (s.includes('/') && !s.includes('<span')) {
+        const parts = s.split('/');
+        if (parts.length === 2) {
+          return `<span class="frac"><span class="num">${parts[0]}</span><span class="den">${parts[1]}</span></span>`;
+        }
+      }
+      return formatMath(s);
+    }
+
+    function generateSingleQuestion(grade, moduleKey, index) {
+      const qId = 'Q_' + grade + '_' + Date.now() + '_' + index + '_' + getRandomInt(100, 999);
+
+      // ===================== 【小學六年級 (P6)】 =====================
+      if (grade === 'P6') {
+        if (moduleKey === 'p6_pct_calc') {
+          const type = getRandomInt(0, 3);
+          if (type === 0) {
+            const p = getRandomItem([120, 150, 180, 240, 250, 300, 360, 480, 500, 640]);
+            const d = getRandomItem([70, 75, 80, 85, 90]);
+            const dNames = { 70: '七折', 75: '七五折', 80: '八折', 85: '八五折', 90: '九折' };
+            const ans = (p * d) / 100;
+            return {
+              id: qId, grade: 'P6', strand: '數 (N)', topic: '百分數與折扣應用',
+              text: `一件外套原價 ${p} 元，百貨公司現以【${dNames[d]}】出售，售價是多少元？`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `售價 $= ${p} \\times ${d}\\% = ${p} \\times ${d / 100} = ${ans}$ 元。`
+            };
+          } else if (type === 1) {
+            const c = getRandomItem([80, 100, 120, 150, 200, 250, 320]);
+            const pct = getRandomItem([10, 15, 20, 25, 30]);
+            const ans = c * (1 + pct / 100);
+            return {
+              id: qId, grade: 'P6', strand: '數 (N)', topic: '百分數與賺蝕應用',
+              text: `文具店購入一個書包成本為 ${c} 元，店主打算賺取 ${pct}\\% 的利潤出售，書包的售價是多少元？`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `售價 $= ${c} \\times (1 + ${pct}\\%) = ${c} \\times ${1 + pct / 100} = ${ans}$ 元。`
+            };
+          } else if (type === 2) {
+            const oldVal = getRandomItem([200, 250, 400, 500, 800]);
+            const pct = getRandomItem([5, 10, 12, 15, 20, 25]);
+            const diff = (oldVal * pct) / 100;
+            const newVal = oldVal + diff;
+            return {
+              id: qId, grade: 'P6', strand: '數 (N)', topic: '增減百分率',
+              text: `某小學去年有學生 ${oldVal} 人，今年學生人數增加至 ${newVal} 人。今年的學生人數增加了百分之幾？（請只輸入數字，如：15）`,
+              correctAnswer: String(pct), points: 5,
+              explanation: `增加百分率 $= \\frac{${newVal} - ${oldVal}}{${oldVal}} \\times 100\\% = \\frac{${diff}}{${oldVal}} \\times 100\\% = ${pct}\\%$。`
+            };
+          } else {
+            const whole = getRandomItem([40, 60, 80, 100, 120]);
+            const pct = getRandomItem([25, 50, 75]);
+            const ans = whole * (pct / 100) + 15;
+            return {
+              id: qId, grade: 'P6', strand: '數 (N)', topic: '分數小數百分數混合計算',
+              text: `計算：$${whole} \\times ${pct}\\% + 15 = ?$`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `先算百分數乘法：$${whole} \\times ${pct / 100} = ${whole * (pct / 100)}$，再加上 $15 = ${ans}$。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p6_circle_measure') {
+          const type = getRandomInt(0, 2);
+          if (type === 0) {
+            const d = getRandomItem([7, 14, 21, 28, 35, 42]);
+            const ans = (22 / 7) * d;
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '圓周計算',
+              text: `一個圓形花圃的直徑是 ${d} m，取圓周率 $\\pi = \\frac{22}{7}$，它的圓周是多少 m？`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `圓周 $= \\pi \\times d = \\frac{22}{7} \\times ${d} = ${ans}$ m。`
+            };
+          } else if (type === 1) {
+            const r = getRandomItem([10, 20, 30, 5, 2]);
+            const ans = Number((3.14 * r * r).toFixed(2));
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '圓面積計算',
+              text: `一個圓形杯墊的半徑是 ${r} cm，取圓周率 $\\pi = 3.14$，它的面積是多少 $\\text{cm}^2$？`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `圓面積 $= \\pi \\times r^2 = 3.14 \\times ${r}^2 = 3.14 \\times ${r * r} = ${ans}\\text{ cm}^2$。`
+            };
+          } else {
+            const r = getRandomItem([7, 14, 21]);
+            const arc = (22 / 7) * r;
+            const total = arc + 2 * r;
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '半圓形周界計算',
+              text: `一個半圓形的半徑是 ${r} cm，取圓周率 $\\pi = \\frac{22}{7}$，它的周界是多少 cm？（提示：包含半圓弧與直徑）`,
+              correctAnswer: String(total), points: 5,
+              explanation: `半圓周界 $= \\text{弧長} + \\text{直徑} = (\\frac{22}{7} \\times ${r}) + (${r} \\times 2) = ${arc} + ${2 * r} = ${total}\\text{ cm}$。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p6_speed_graph') {
+          const type = getRandomInt(0, 2);
+          if (type === 0) {
+            const dist = getRandomItem([120, 150, 180, 200, 240, 300]);
+            const time = getRandomItem([2, 3, 4, 5]);
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '速率公式應用',
+              text: `一輛巴士在公路上行駛了 ${dist} 公里，共用了 ${time} 小時，巴士的平均速率是多少 $\\text{km/h}$？`,
+              correctAnswer: String(dist / time), points: 5,
+              explanation: `速率 $= \\text{距離} \\div \\text{時間} = ${dist} \\div ${time} = ${dist / time}\\text{ km/h}$。`
+            };
+          } else if (type === 1) {
+            const speed = getRandomItem([60, 70, 75, 80, 90]);
+            const hours = getRandomItem([1.5, 2.5, 3, 4]);
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '行程距離計算',
+              text: `私家車以平均速率 ${speed} km/h 行駛了 ${hours} 小時，它一共行駛了多少公里？`,
+              correctAnswer: String(speed * hours), points: 5,
+              explanation: `距離 $= \\text{速率} \\times \\text{時間} = ${speed} \\times ${hours} = ${speed * hours}\\text{ km}$。`
+            };
+          } else {
+            const secSpeed = getRandomItem([12, 15, 20, 25]);
+            return {
+              id: qId, grade: 'P6', strand: '度量 (M)', topic: '速率單位換算',
+              text: `單車選手的騎行速率是 ${secSpeed} m/s，這代表他每分鐘可騎行多少米？（以 $\\text{m/min}$ 為單位）`,
+              correctAnswer: String(secSpeed * 60), points: 5,
+              explanation: `1 分鐘 $= 60$ 秒，故每分鐘騎行 $= ${secSpeed} \\times 60 = ${secSpeed * 60}\\text{ m/min}$。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p6_algebra_adv') {
+          const type = getRandomInt(0, 2);
+          if (type === 0) {
+            const a = getRandomItem([2, 3, 4, 5]);
+            const b = getRandomItem([3, 4, 5, 6, 7]);
+            const x = getRandomItem([4, 5, 6, 7, 8]);
+            const rhs = a * (x + b);
+            return {
+              id: qId, grade: 'P6', strand: '代數 (A)', topic: '帶括號的簡易方程',
+              text: `解方程：$${a}(x + ${b}) = ${rhs}$。$x = ?$`,
+              correctAnswer: String(x), points: 5,
+              explanation: `兩邊同除以 ${a}：$x + ${b} = ${rhs / a} \\implies x = ${rhs / a} - ${b} = ${x}$。`
+            };
+          } else if (type === 1) {
+            const a = getRandomItem([3, 4, 5, 6]);
+            const b = getRandomItem([2, 4, 5, 8]);
+            const x = a * getRandomItem([3, 4, 5, 6]);
+            const rhs = (x / a) - b;
+            return {
+              id: qId, grade: 'P6', strand: '代數 (A)', topic: '含分數的簡易方程',
+              text: `解方程：$\\frac{x}{${a}} - ${b} = ${rhs}$。$x = ?$`,
+              correctAnswer: String(x), points: 5,
+              explanation: `移項：$\\frac{x}{${a}} = ${rhs} + ${b} = ${rhs + b} \\implies x = (${rhs + b}) \\times ${a} = ${x}$。`
+            };
+          } else {
+            const pen = getRandomItem([6, 8, 12]);
+            const count = getRandomItem([4, 5, 6]);
+            const nb = getRandomItem([15, 20, 25]);
+            const total = pen * count + nb;
+            return {
+              id: qId, grade: 'P6', strand: '代數 (A)', topic: '簡易方程文字應用題',
+              text: `小玲買了一本 ${nb} 元的筆記簿和 ${count} 枝相同的原子筆，合共付了 ${total} 元。每枝原子筆售多少元？`,
+              correctAnswer: String(pen), points: 5,
+              explanation: `設每枝原子筆售 $y$ 元。$${count}y + ${nb} = ${total} \\implies ${count}y = ${total - nb} \\implies y = ${pen}$ 元。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p6_data_graph') {
+          const total = getRandomItem([120, 200, 300, 400, 500]);
+          const pct = getRandomItem([35, 40, 45, 50]);
+          const ans = (total * pct) / 100;
+          return {
+            id: qId, grade: 'P6', strand: '數據處理 (D)', topic: '圓形圖數據分析',
+            text: `在一個課外活動調查中共有 ${total} 名學生參與。圓形圖顯示有 ${pct}\\% 的學生選擇了「游泳班」，選擇游泳班的學生有多少人？`,
+            correctAnswer: String(ans), points: 5,
+            explanation: `學生人數 $= ${total} \\times ${pct}\\% = ${total} \\times ${pct / 100} = ${ans}$ 人。`
+          };
+        }
+
+        const symQuestions = [
+          { q: '一個正五邊形有幾條對稱軸？', a: '5', exp: '正 $n$ 邊形均有 $n$ 條對稱軸，所以正五邊形有 5 條對稱軸。' },
+          { q: '一個正方形繞中心旋轉 360 度，能與原本圖形重合幾次？（即旋轉對稱階數）', a: '4', exp: '正方形旋轉一整圈（360°）分別在 90°、180°、270°、360° 重合，共有 4 次。' },
+          { q: '一個長方體的摺紙展開圖共有多少個面？', a: '6', exp: '長方體有 6 個面，因此展開圖亦有 6 個面。' },
+          { q: '一個正方體有 8 個頂點和 6 個面，它共有多少條棱？', a: '12', exp: '正方體共有 12 條棱。' }
+        ];
+        const pickedSym = getRandomItem(symQuestions);
+        return {
+          id: qId, grade: 'P6', strand: '圖形與空間 (S)', topic: '對稱與立體展開圖',
+          text: pickedSym.q, correctAnswer: pickedSym.a, points: 5, explanation: pickedSym.exp
+        };
+      }
+
+      // ===================== 【小學五年級 (P5)】 =====================
+      if (grade === 'P5') {
+        if (moduleKey === 'p5_frac_add_sub') {
+          const isAdd = Math.random() > 0.5;
+          const d1 = getRandomItem([2, 3, 4, 5, 6]);
+          let d2 = getRandomItem([3, 4, 5, 6, 8]);
+          while (d1 === d2) d2 = (d2 % 8) + 2;
+          const common = lcm(d1, d2);
+
+          if (isAdd) {
+            const n1 = getRandomInt(1, d1 - 1);
+            const n2 = getRandomInt(1, d2 - 1);
+            const sumN = (n1 * (common / d1)) + (n2 * (common / d2));
+            const g = gcd(sumN, common);
+            const num = sumN / g;
+            const den = common / g;
+            const ansStr = num % den === 0 ? String(num / den) : (num > den ? `${Math.floor(num / den)} ${num % den}/${den}` : `${num}/${den}`);
+            return {
+              id: qId, grade: 'P5', strand: '數 (N)', topic: '異分母分數加法',
+              text: `計算：$\\frac{${n1}}{${d1}} + \\frac{${n2}}{${d2}} = ?$`,
+              correctAnswer: ansStr, points: 5,
+              explanation: `先通分至公分母 ${common}：$\\frac{${n1 * (common / d1)}}{${common}} + \\frac{${n2 * (common / d2)}}{${common}} = \\frac{${sumN}}{${common}}$，約簡後為 $${ansStr}$。`
+            };
+          } else {
+            let n1 = getRandomInt(1, d1 - 1);
+            let n2 = getRandomInt(1, d2 - 1);
+            if (n1 / d1 < n2 / d2) { const temp = n1; n1 = n2; n2 = temp; }
+            if (n1 / d1 === n2 / d2) n1 = d1 - 1;
+            const diffN = (n1 * (common / d1)) - (n2 * (common / d2));
+            const g = gcd(diffN, common);
+            const ansStr = `${diffN / g}/${common / g}`;
+            return {
+              id: qId, grade: 'P5', strand: '數 (N)', topic: '異分母分數減法',
+              text: `計算：$\\frac{${n1}}{${d1}} - \\frac{${n2}}{${d2}} = ?$`,
+              correctAnswer: ansStr, points: 5,
+              explanation: `先通分至公分母 ${common}：$\\frac{${n1 * (common / d1)}}{${common}} - \\frac{${n2 * (common / d2)}}{${common}} = \\frac{${diffN}}{${common}} = ${ansStr}$。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p5_frac_mul_div') {
+          const isMul = Math.random() > 0.5;
+          if (isMul) {
+            const whole = getRandomItem([12, 15, 18, 20, 24, 30]);
+            const den = getRandomItem([3, 4, 5, 6]);
+            const num = getRandomInt(1, den - 1);
+            const ans = (whole / den) * num;
+            return {
+              id: qId, grade: 'P5', strand: '數 (N)', topic: '分數乘法應用',
+              text: `一箱蘋果重 ${whole} 公斤，水果店賣出了整箱蘋果的 $\\frac{${num}}{${den}}$，賣出了蘋果多少公斤？`,
+              correctAnswer: String(ans), points: 5,
+              explanation: `賣出重量 $= ${whole} \\times \\frac{${num}}{${den}} = ${ans}$ 公斤。`
+            };
+          } else {
+            const den = getRandomItem([2, 3, 4, 5]);
+            const whole = getRandomItem([2, 3, 4]);
+            return {
+              id: qId, grade: 'P5', strand: '數 (N)', topic: '分數除法應用',
+              text: `把長 $\\frac{1}{${den}}$ 米的鐵線平均剪成 ${whole} 段，每段長多少米？（以分數表示）`,
+              correctAnswer: `1/${den * whole}`, points: 5,
+              explanation: `每段長度 $= \\frac{1}{${den}} \\div ${whole} = \\frac{1}{${den * whole}}$ 米。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p5_dec_calc') {
+          const a = getRandomInt(15, 45) / 10;
+          const b = getRandomItem([2, 3, 4, 5]);
+          const c = getRandomItem([1.2, 2.5, 3.4]);
+          const ans = Number((a * b + c).toFixed(2));
+          return {
+            id: qId, grade: 'P5', strand: '數 (N)', topic: '小數四則混合運算',
+            text: `計算：$${a} \\times ${b} + ${c} = ?$`,
+            correctAnswer: String(ans), points: 5,
+            explanation: `先乘後加：$${a} \\times ${b} = ${Number((a * b).toFixed(2))}$，再加上 $${c} = ${ans}$。`
+          };
+        }
+
+        if (moduleKey === 'p5_area_calc') {
+          const shape = getRandomInt(0, 2);
+          if (shape === 0) {
+            const base = getRandomInt(6, 14);
+            const h = getRandomInt(4, 10);
+            return {
+              id: qId, grade: 'P5', strand: '度量 (M)', topic: '平行四邊形面積',
+              text: `一個平行四邊形的底是 ${base} cm，高是 ${h} cm，它的面積是多少 $\\text{cm}^2$？`,
+              correctAnswer: String(base * h), points: 5,
+              explanation: `面積 $=$ 底 $\\times$ 高 $= ${base} \\times ${h} = ${base * h}\\text{ cm}^2$。`
+            };
+          } else if (shape === 1) {
+            const base = getRandomInt(4, 10) * 2;
+            const h = getRandomInt(3, 9);
+            return {
+              id: qId, grade: 'P5', strand: '度量 (M)', topic: '三角形面積',
+              text: `一個三角形的底是 ${base} cm，高是 ${h} cm，它的面積是多少 $\\text{cm}^2$？`,
+              correctAnswer: String((base * h) / 2), points: 5,
+              explanation: `面積 $=$ 底 $\\times$ 高 $\\div 2 = ${base} \\times ${h} \\div 2 = ${(base * h) / 2}\\text{ cm}^2$。`
+            };
+          } else {
+            const t = getRandomInt(3, 6);
+            const b = t + getRandomInt(2, 6);
+            const h = getRandomInt(2, 5) * 2;
+            const area = ((t + b) * h) / 2;
+            return {
+              id: qId, grade: 'P5', strand: '度量 (M)', topic: '梯形面積',
+              text: `一個梯形上底是 ${t} cm，下底是 ${b} cm，高是 ${h} cm，它的面積是多少 $\\text{cm}^2$？`,
+              correctAnswer: String(area), points: 5,
+              explanation: `梯形面積 $= (\\text{上底} + \\text{下底}) \\times \\text{高} \\div 2 = (${t} + ${b}) \\times ${h} \\div 2 = ${area}\\text{ cm}^2$。`
+            };
+          }
+        }
+
+        if (moduleKey === 'p5_vol_measure') {
+          const initWater = getRandomInt(300, 500);
+          const stone = getRandomInt(40, 90);
+          return {
+            id: qId, grade: 'P5', strand: '度量 (M)', topic: '排水法測量不規則立體體積',
+            text: `量杯中原本有水 ${initWater} mL。放入一顆石頭完全浸沒後，水面升至 ${initWater + stone} mL。這顆石頭的體積是多少 $\\text{cm}^3$？`,
+            correctAnswer: String(stone), points: 5,
+            explanation: `石頭體積 $=$ 水面上升體積 $= ${initWater + stone} - ${initWater} = ${stone}\\text{ mL} = ${stone}\\text{ cm}^3$。`
+          };
+        }
+
+        if (moduleKey === 'p5_avg_data') {
+          const s1 = 80, s2 = 85, s3 = 90, s4 = 85;
+          return {
+            id: qId, grade: 'P5', strand: '數據處理 (D)', topic: '平均數計算',
+            text: `小明四次數學測驗得分分別為 ${s1}、${s2}、${s3} 及 ${s4} 分，他的平均分是多少分？`,
+            correctAnswer: '85', points: 5,
+            explanation: `平均數 $= (${s1} + ${s2} + ${s3} + ${s4}) \\div 4 = 340 \\div 4 = 85$ 分。`
+          };
+        }
+
+        // p5_algebra_intro
+        const a = getRandomItem([2, 3, 4, 5]);
+        const c = getRandomInt(3, 9);
+        const x = getRandomInt(4, 9);
+        const rhs = a * x - c;
+        return {
+          id: qId, grade: 'P5', strand: '代數 (A)', topic: '簡易方程解題',
+          text: `解方程：$${a}x - ${c} = ${rhs}$。$x = ?$`,
+          correctAnswer: String(x), points: 5,
+          explanation: `$${a}x = ${rhs} + ${c} = ${rhs + c} \\implies x = ${x}$。`
+        };
+      }
+
+      // ===================== 【小學四年級 (P4)】 =====================
+      if (grade === 'P4') {
+        if (moduleKey === 'p4_frac_add_sub') {
+          const d = getRandomItem([5, 7, 8, 9, 10]);
+          const n1 = getRandomInt(1, 3);
+          const n2 = getRandomInt(1, 3);
+          return {
+            id: qId, grade: 'P4', strand: '數 (N)', topic: '同分母分數加法',
+            text: `計算：$\\frac{${n1}}{${d}} + \\frac{${n2}}{${d}} = ?$`,
+            correctAnswer: `${n1 + n2}/${d}`, points: 5,
+            explanation: `同分母分數相加，分母不變分子相加：$\\frac{${n1} + ${n2}}{${d}} = \\frac{${n1 + n2}}{${d}}$。`
+          };
+        }
+        if (moduleKey === 'p4_dec_basic') {
+          const a = getRandomInt(10, 50) / 10;
+          const b = getRandomInt(5, 30) / 10;
+          const ans = Number((a + b).toFixed(1));
+          return {
+            id: qId, grade: 'P4', strand: '數 (N)', topic: '小數加法',
+            text: `計算：$${a} + ${b} = ?$`,
+            correctAnswer: String(ans), points: 5,
+            explanation: `$${a} + ${b} = ${ans}$。`
+          };
+        }
+        if (moduleKey === 'p4_factor_multiple') {
+          const p = getRandomItem([12, 18, 24, 30]);
+          const fCounts = { 12: 6, 18: 6, 24: 8, 30: 8 };
+          return {
+            id: qId, grade: 'P4', strand: '數 (N)', topic: '因數個數辨認',
+            text: `整數 ${p} 共有多少個正因數？（例如 12 的因數有 1, 2, 3, 4, 6, 12 共 6 個）`,
+            correctAnswer: String(fCounts[p]), points: 5,
+            explanation: `${p} 的所有因數共有 ${fCounts[p]} 個。`
+          };
+        }
+        const len = getRandomInt(8, 16);
+        const wid = getRandomInt(3, 7);
+        return {
+          id: qId, grade: 'P4', strand: '度量 (M)', topic: '長方形面積計算',
+          text: `一個長方形的長是 ${len} cm，闊是 ${wid} cm，它的面積是多少 $\\text{cm}^2$？`,
+          correctAnswer: String(len * wid), points: 5,
+          explanation: `長方形面積 $=$ 長 $\\times$ 闊 $= ${len} \\times ${wid} = ${len * wid}\\text{ cm}^2$。`
+        };
+      }
+
+      // ===================== 【小學三年級 (P3)】 =====================
+      if (grade === 'P3') {
+        if (moduleKey === 'p3_four_ops') {
+          const a = getRandomInt(20, 50);
+          const b = getRandomInt(2, 8);
+          const c = getRandomInt(5, 12);
+          return {
+            id: qId, grade: 'P3', strand: '數 (N)', topic: '四則混合運算',
+            text: `計算：$${a} + ${b} \\times ${c} = ?$`,
+            correctAnswer: String(a + b * c), points: 5,
+            explanation: `先乘後加：$${b} \\times ${c} = ${b * c}$，然後 $${a} + ${b * c} = ${a + b * c}$。`
+          };
+        }
+        if (moduleKey === 'p3_frac_basic') {
+          return {
+            id: qId, grade: 'P3', strand: '數 (N)', topic: '同分母分數概念',
+            text: `一個薄餅平均切成 8 塊，小明吃了 3 塊，他吃了幾分之幾盤薄餅？（以分數輸入，如：3/8）`,
+            correctAnswer: '3/8', points: 5,
+            explanation: `吃了 3 塊即佔整體的 $\\frac{3}{8}$。`
+          };
+        }
+        if (moduleKey === 'p3_measure_units') {
+          const l = getRandomInt(2, 4);
+          const ml = getRandomItem([250, 500, 750]);
+          return {
+            id: qId, grade: 'P3', strand: '度量 (M)', topic: '容量單位換算',
+            text: `${l} 升 ${ml} 毫升等於多少毫升？`,
+            correctAnswer: String(l * 1000 + ml), points: 5,
+            explanation: `$${l}\\text{ L} = ${l * 1000}\\text{ mL}$，加上 $${ml}\\text{ mL} = ${l * 1000 + ml}\\text{ mL}$。`
+          };
+        }
+        return {
+          id: qId, grade: 'P3', strand: '圖形與空間 (S)', topic: '八個方向辨認',
+          text: `東面與北面之間的方向稱為什麼？（請輸入：東北面）`,
+          correctAnswer: '東北面', points: 5,
+          explanation: `東面與北面之間的方向是「東北面」。`
+        };
+      }
+
+      // ===================== 【小學二年級 (P2)】 =====================
+      if (grade === 'P2') {
+        if (moduleKey === 'p2_mul_div') {
+          const a = getRandomInt(2, 9);
+          const b = getRandomInt(2, 9);
+          return {
+            id: qId, grade: 'P2', strand: '數 (N)', topic: '表內乘法',
+            text: `一盒彩色筆有 ${a} 枝，老師買了 ${b} 盒，共有彩色筆多少枝？`,
+            correctAnswer: String(a * b), points: 5,
+            explanation: `彩色筆總數 $= ${a} \\times ${b} = ${a * b}$ 枝。`
+          };
+        }
+        if (moduleKey === 'p2_3digit_calc') {
+          const a = getRandomInt(300, 600);
+          const b = getRandomInt(120, 250);
+          return {
+            id: qId, grade: 'P2', strand: '數 (N)', topic: '3位數退位減法',
+            text: `計算：$${a} - ${b} = ?$`,
+            correctAnswer: String(a - b), points: 5,
+            explanation: `$${a} - ${b} = ${a - b}$。`
+          };
+        }
+        return {
+          id: qId, grade: 'P2', strand: '度量 (M)', topic: '長度單位換算',
+          text: `1 米等於多少厘米？`,
+          correctAnswer: '100', points: 5,
+          explanation: `$1\\text{ m} = 100\\text{ cm}$。`
+        };
+      }
+
+      // ===================== 【小學一年級 (P1)】 =====================
+      if (moduleKey === 'p1_add_sub_18') {
+        const isAdd = Math.random() > 0.5;
+        if (isAdd) {
+          const a = getRandomInt(2, 9);
+          const b = getRandomInt(1, 18 - a);
+          return {
+            id: qId, grade: 'P1', strand: '數 (N)', topic: '18以內加法',
+            text: `計算：$${a} + ${b} = ?$`,
+            correctAnswer: String(a + b), points: 5,
+            explanation: `$${a} + ${b} = ${a + b}$。`
+          };
+        } else {
+          const a = getRandomInt(10, 18);
+          const b = getRandomInt(1, 8);
+          return {
+            id: qId, grade: 'P1', strand: '數 (N)', topic: '18以內減法',
+            text: `計算：$${a} - ${b} = ?$`,
+            correctAnswer: String(a - b), points: 5,
+            explanation: `$${a} - ${b} = ${a - b}$。`
+          };
+        }
+      }
+
+      if (moduleKey === 'p1_num_100') {
+        const a = getRandomInt(20, 60);
+        const b = getRandomInt(5, 25);
+        return {
+          id: qId, grade: 'P1', strand: '數 (N)', topic: '100以內兩位數加法',
+          text: `小明有糖果 ${a} 粒，小芬送給他 ${b} 粒，小明現在共有糖果多少粒？`,
+          correctAnswer: String(a + b), points: 5,
+          explanation: `糖果總數 $= ${a} + ${b} = ${a + b}$ 粒。`
+        };
+      }
+
+      if (moduleKey === 'p1_time_money') {
+        const fiveCount = getRandomInt(2, 5);
+        return {
+          id: qId, grade: 'P1', strand: '度量 (M)', topic: '香港硬幣換值',
+          text: `小玲有 ${fiveCount} 枚 5 元硬幣，合共是多少元？`,
+          correctAnswer: String(fiveCount * 5), points: 5,
+          explanation: `${fiveCount} 枚 5 元硬幣 $= 5 \\times ${fiveCount} = ${fiveCount * 5}$ 元。`
+        };
+      }
+
+      return {
+        id: qId, grade: 'P1', strand: '圖形與空間 (S)', topic: '平面圖形辨認',
+        text: `一個四邊形有 4 條邊，三角形有多少條邊？`,
+        correctAnswer: '3', points: 5,
+        explanation: `三角形有 3 條邊和 3 個角。`
+      };
+    }
+
+    function generateQuiz(grade, moduleKey, count = 20) {
+      const questions = [];
+      const modules = CURRICULUM_DATA[grade] || [];
+      let availableKeys = modules.map(m => m.key).filter(k => !k.endsWith('_all'));
+      if (availableKeys.length === 0) availableKeys = ['p6_pct_calc', 'p6_circle_measure', 'p6_speed_graph', 'p6_algebra_adv'];
+
+      for (let i = 0; i < count; i++) {
+        let currentKey = moduleKey;
+        if (!currentKey || currentKey.endsWith('_all')) {
+          currentKey = availableKeys[i % availableKeys.length];
+        }
+        const q = generateSingleQuestion(grade, currentKey, i + 1);
+        questions.push(q);
+      }
+      return questions;
+    }
+
+    function showToast(msg, type = 'error') {
+      const toast = document.getElementById('toastMessage');
+      toast.innerText = msg;
+      toast.className = type === 'error' 
+        ? 'block mb-6 p-4 rounded-xl text-sm font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-sm'
+        : 'block mb-6 p-4 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function hideToast() {
+      document.getElementById('toastMessage').className = 'hidden';
+    }
+
+    function selectGrade(grade) {
+      currentGrade = grade;
+      hideToast();
+
+      // 切換按鈕狀態
+      document.querySelectorAll('.grade-tab-btn').forEach(btn => {
+        btn.className = 'grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition';
+      });
+      const activeTab = document.getElementById('tab_' + grade);
+      if (activeTab) {
+        activeTab.className = 'grade-tab-btn px-3 py-2.5 text-sm font-semibold rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-md transition';
+      }
+
+      const gradeLabels = {
+        'P1': '小學一年級 (P1)', 'P2': '小學二年級 (P2)', 'P3': '小學三年級 (P3)',
+        'P4': '小學四年級 (P4)', 'P5': '小學五年級 (P5)', 'P6': '小學六年級 (P6)'
+      };
+      document.getElementById('moduleSectionTitle').innerText = `2. 選取 ${gradeLabels[grade]} 課題單元 (Select Assessment Unit):`;
+
+      renderModuleCards();
+    }
+
+    function renderModuleCards() {
+      const container = document.getElementById('moduleCardContainer');
+      const modules = CURRICULUM_DATA[currentGrade] || [];
+      if (modules.length > 0) currentSelectedModule = modules[0].key;
+
+      let html = '';
+      modules.forEach(m => {
+        const isSelected = m.key === currentSelectedModule;
+        html += `
+          <div onclick="chooseModule('${m.key}')" id="mod_${m.key}" 
+               class="module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed ${
+                 isSelected ? 'border-blue-600 bg-blue-50/80 text-blue-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50'
+               }">
+            ${m.title}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function chooseModule(key) {
+      currentSelectedModule = key;
+      document.querySelectorAll('.module-card').forEach(c => {
+        c.className = 'module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50';
+      });
+      const active = document.getElementById('mod_' + key);
+      if (active) {
+        active.className = 'module-card p-4 rounded-xl border-2 cursor-pointer transition text-sm font-medium leading-relaxed border-blue-600 bg-blue-50/80 text-blue-900 shadow-sm';
+      }
+    }
+
+    function startAssessment() {
+      const name = document.getElementById('studentName').value.trim();
+      if (!name) {
+        showToast('請先填寫學生姓名再開始評估！', 'error');
+        return;
+      }
+      hideToast();
+
+      currentQuestions = generateQuiz(currentGrade, currentSelectedModule, 20);
+      inputModeMap = {};
+
+      document.getElementById('selectionHub').classList.add('hidden');
+      document.getElementById('resultArea').classList.add('hidden');
+      document.getElementById('assessmentArea').classList.remove('hidden');
+
+      const activeModuleObj = (CURRICULUM_DATA[currentGrade] || []).find(m => m.key === currentSelectedModule);
+      document.getElementById('assessmentStatusText').innerText = `測驗進行中 (${currentGrade} - 共 20 題)`;
+      document.getElementById('assessmentModuleSub').innerText = activeModuleObj ? activeModuleObj.title : '';
+
+      renderAssessmentQuestions(currentQuestions);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderAssessmentQuestions(questions) {
+      const container = document.getElementById('questionsContainer');
+      let html = '';
+
+      questions.forEach((q, idx) => {
+        inputModeMap[q.id] = 'normal';
+
+        html += `
+          <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm" id="card_${q.id}">
+            <div class="flex justify-between items-center mb-3">
+              <span class="inline-block bg-sky-50 text-sky-800 border border-sky-200 text-xs font-semibold px-3 py-1 rounded-full">
+                ${q.strand} • ${q.topic}
+              </span>
+              <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                ${q.points} 分
+              </span>
+            </div>
+
+            <div class="text-base sm:text-lg text-slate-900 leading-relaxed mb-4">
+              <strong class="text-blue-700">第 ${idx + 1} 題：</strong>
+              ${formatMath(q.text)}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">作答模式：</span>
+              <button type="button" id="toggleBtn_${q.id}" onclick="toggleInputMode('${q.id}')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
+                <span>➗ 切換為分數輸入</span>
+              </button>
+            </div>
+
+            <!-- 普通單行文字輸入方格 -->
+            <div id="normalInputBox_${q.id}">
+              <input type="text" id="ans_${q.id}" placeholder="請在此輸入答案 (例如：36、13.2 或 5/6)" autocomplete="off"
+                     class="w-full max-w-sm px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            </div>
+
+            <!-- 左・上・下 垂直分數專用輸入方格 -->
+            <div id="fractionInputBox_${q.id}" class="hidden">
+              <div class="inline-flex items-center gap-3 bg-slate-50 border border-slate-300 rounded-xl p-3 sm:p-4">
+                
+                <!-- 左方整數格 -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[10px] font-semibold text-slate-500 mb-1">整數(選填)</span>
+                  <input type="text" id="whole_${q.id}" placeholder="" autocomplete="off"
+                         class="w-14 h-14 text-xl font-bold text-center bg-white border-2 border-slate-300 rounded-lg focus:outline-none focus:border-blue-600 transition">
+                </div>
+
+                <!-- 右方上下分子分母格 -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[10px] font-semibold text-slate-500 mb-1">分子</span>
+                  <input type="text" id="num_${q.id}" placeholder="" autocomplete="off"
+                         class="w-16 h-8 text-base font-bold text-center bg-white border-2 border-slate-300 rounded-md focus:outline-none focus:border-blue-600 transition">
+                  <div class="w-full h-0.5 bg-slate-800 my-1 rounded-full"></div>
+                  <input type="text" id="den_${q.id}" placeholder="" autocomplete="off"
+                         class="w-16 h-8 text-base font-bold text-center bg-white border-2 border-slate-300 rounded-md focus:outline-none focus:border-blue-600 transition">
+                  <span class="text-[10px] font-semibold text-slate-500 mt-1">分母</span>
+                </div>
+
+              </div>
+              <p class="text-xs text-slate-400 mt-2">💡 提示：如答案為真分數，左邊整數格可留空；亦可點擊上方按鈕切換回普通輸入。</p>
+            </div>
+
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function toggleInputMode(qId) {
+      const mode = inputModeMap[qId] || 'normal';
+      const normalBox = document.getElementById(`normalInputBox_${qId}`);
+      const fracBox = document.getElementById(`fractionInputBox_${qId}`);
+      const btn = document.getElementById(`toggleBtn_${qId}`);
+
+      if (mode === 'normal') {
+        inputModeMap[qId] = 'fraction';
+        normalBox.classList.add('hidden');
+        fracBox.classList.remove('hidden');
+        btn.innerHTML = '<span>🔢 切換回普通輸入</span>';
+        btn.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-400 bg-blue-50 text-blue-700 transition flex items-center gap-1.5';
+      } else {
+        inputModeMap[qId] = 'normal';
+        fracBox.classList.add('hidden');
+        normalBox.classList.remove('hidden');
+        btn.innerHTML = '<span>➗ 切換為分數輸入</span>';
+        btn.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5';
+      }
+    }
+
+    function parseValue(str) {
+      if (!str && str !== 0) return null;
+      const s = String(str).trim();
+      if (!isNaN(Number(s))) return Number(s);
+
+      const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+      if (mixed) {
+        const w = Number(mixed[1]), n = Number(mixed[2]), d = Number(mixed[3]);
+        if (d !== 0) return w + (n / d);
+      }
+
+      if (s.includes('/')) {
+        const parts = s.split('/');
+        if (parts.length === 2) {
+          const n = Number(parts[0]), d = Number(parts[1]);
+          if (!isNaN(n) && !isNaN(d) && d !== 0) return n / d;
+        }
+      }
+      return null;
+    }
+
+    function checkAnswerCorrectness(userAns, correctAns) {
+      if (!userAns && userAns !== 0) return false;
+      const u = String(userAns).trim().toLowerCase().replace(/面$/, '').replace(/方向$/, '');
+      const c = String(correctAns).trim().toLowerCase().replace(/面$/, '').replace(/方向$/, '');
+      if (u === c) return true;
+
+      const uNum = parseValue(u);
+      const cNum = parseValue(c);
+      if (uNum !== null && cNum !== null) {
+        return Math.abs(uNum - cNum) < 0.001;
+      }
+      return false;
+    }
+
+    function submitAssessment() {
+      let rawScore = 0;
+      let maxScore = 0;
+      const reviewList = [];
+
+      const strandStats = {
+        '數 (N)': { total: 0, earned: 0 },
+        '度量 (M)': { total: 0, earned: 0 },
+        '圖形與空間 (S)': { total: 0, earned: 0 },
+        '數據處理 (D)': { total: 0, earned: 0 },
+        '代數 (A)': { total: 0, earned: 0 }
+      };
+
+      currentQuestions.forEach(q => {
+        let userAns = '';
+        const mode = inputModeMap[q.id] || 'normal';
+
+        if (mode === 'fraction') {
+          const w = document.getElementById(`whole_${q.id}`).value.trim();
+          const n = document.getElementById(`num_${q.id}`).value.trim();
+          const d = document.getElementById(`den_${q.id}`).value.trim();
+
+          if (w && n && d) userAns = `${w} ${n}/${d}`;
+          else if (n && d) userAns = `${n}/${d}`;
+          else if (w && !n && !d) userAns = w;
+          else if (n && !d && !w) userAns = n;
+        } else {
+          const normalInput = document.getElementById(`ans_${q.id}`);
+          if (normalInput) userAns = normalInput.value.trim();
+        }
+
+        const pts = q.points || 5;
+        maxScore += pts;
+
+        const strand = q.strand || '數 (N)';
+        if (!strandStats[strand]) strandStats[strand] = { total: 0, earned: 0 };
+        strandStats[strand].total += pts;
+
+        const isCorrect = checkAnswerCorrectness(userAns, q.correctAnswer);
+        if (isCorrect) {
+          rawScore += pts;
+          strandStats[strand].earned += pts;
+        }
+
+        reviewList.push({
+          id: q.id,
+          grade: q.grade,
+          strand: strand,
+          topic: q.topic,
+          text: q.text,
+          userAnswer: userAns,
+          correctAnswer: q.correctAnswer,
+          isCorrect: isCorrect,
+          pointsEarned: isCorrect ? pts : 0,
+          maxPoints: pts,
+          explanation: q.explanation
+        });
+      });
+
+      currentReviewList = reviewList;
+      currentMistakes = reviewList.filter(r => !r.isCorrect);
+
+      const percentage = maxScore > 0 ? (rawScore / maxScore) * 100 : 0;
+      let gradeBand = '需加強 (Needs Improvement)';
+      if (percentage >= 85) gradeBand = '優良 (Distinction)';
+      else if (percentage >= 70) gradeBand = '良好 (Merit)';
+      else if (percentage >= 50) gradeBand = '及格 (Pass)';
+
+      const strandAnalysis = [];
+      const strengths = [];
+      const weaknesses = [];
+
+      for (const [sName, sData] of Object.entries(strandStats)) {
+        if (sData.total > 0) {
+          const pct = Math.round((sData.earned / sData.total) * 100);
+          strandAnalysis.push({ strand: sName, percentage: pct, earned: sData.earned, total: sData.total });
+          if (pct >= 80) strengths.push(sName);
+          else if (pct < 60) weaknesses.push(sName);
+        }
+      }
+
+      displayResults({
+        rawScore,
+        maxScore,
+        percentage: percentage.toFixed(1),
+        gradeBand,
+        strandAnalysis,
+        strengths,
+        weaknesses,
+        reviews: reviewList
+      });
+    }
+
+    function displayResults(data) {
+      document.getElementById('assessmentArea').classList.add('hidden');
+      document.getElementById('resultArea').classList.remove('hidden');
+
+      const sName = document.getElementById('studentName').value.trim() || '學生';
+      const sClass = document.getElementById('studentClass').value.trim();
+      const sId = document.getElementById('studentId').value.trim();
+
+      document.getElementById('scoreDisplay').innerHTML = `${data.rawScore} / ${data.maxScore} <span class="text-2xl font-semibold opacity-85">(${data.percentage}%)</span>`;
+      document.getElementById('gradeBandDisplay').innerText = `表現等級：${data.gradeBand}`;
+      document.getElementById('studentDetailTag').innerText = `學生：${sName} ${sClass ? `| 班別：${sClass}` : ''} ${sId ? `| 學號：${sId}` : ''} | 評估年級：${currentGrade}`;
+
+      // 渲染五大範疇長條圖
+      let barsHtml = '';
+      data.strandAnalysis.forEach(s => {
+        const color = s.percentage >= 80 ? 'bg-emerald-500' : (s.percentage >= 60 ? 'bg-blue-500' : 'bg-rose-500');
+        barsHtml += `
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold text-slate-700 mb-1">
+              <span>${s.strand}</span>
+              <span>${s.percentage}% (${s.earned}/${s.total} 分)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+              <div class="${color} h-3 rounded-full transition-all duration-700" style="width: ${s.percentage}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('strandAnalysisBars').innerHTML = barsHtml;
+
+      // 診斷建議
+      let feedback = '<p class="font-bold text-slate-900 mb-1">💡 學習表現診斷與建議：</p>';
+      if (data.strengths.length > 0) {
+        feedback += `<p class="text-emerald-700 font-medium">✅ <strong>優勢範疇：</strong>你在 <strong>${data.strengths.join('、')}</strong> 掌握扎實，理解準確！</p>`;
+      }
+      if (data.weaknesses.length > 0) {
+        feedback += `<p class="text-rose-700 font-medium mt-1">⚠️ <strong>待加強範疇：</strong>建議針對 <strong>${data.weaknesses.join('、')}</strong> 進行專項練習與概念強化。</p>`;
+      } else {
+        feedback += `<p class="text-blue-700 font-medium mt-1">🎉 各範疇表現均非常全面均衡，繼續保持！</p>`;
+      }
+      document.getElementById('diagnosticFeedbackBox').innerHTML = feedback;
+
+      // 一按生成錯題跟進練習按鈕顯示
+      const remBtn = document.getElementById('remediationActionBtn');
+      if (currentMistakes.length > 0) {
+        remBtn.classList.remove('hidden');
+        remBtn.innerHTML = `<span>💡 一按生成錯題跟進練習 (${currentMistakes.length} 道錯題針對性強化)</span>`;
+      } else {
+        remBtn.classList.add('hidden');
+      }
+
+      // 渲染 20 題詳細解析
+      let reviewHtml = '';
+      data.reviews.forEach((r, idx) => {
+        const isCorrect = r.isCorrect;
+        reviewHtml += `
+          <div class="p-4 rounded-xl border-l-4 ${isCorrect ? 'border-emerald-500 bg-emerald-50/50' : 'border-rose-500 bg-rose-50/50'} border border-slate-200">
+            <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1.5">
+              <span class="${isCorrect ? 'text-emerald-800' : 'text-rose-800'}">第 ${idx + 1} 題 [${r.strand}] • ${r.topic}：${isCorrect ? '✅ 正確' : '❌ 錯誤'}</span>
+              <span class="text-slate-500 font-semibold">${r.pointsEarned}/${r.maxPoints} 分</span>
+            </div>
+            <div class="text-sm text-slate-800 mb-2"><strong>題幹：</strong>${formatMath(r.text)}</div>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-1">
+              <div><strong>你的答案：</strong>${formatAnswerDisplay(r.userAnswer)}</div>
+              ${!isCorrect ? `<div><strong>正確答案：</strong>${formatAnswerDisplay(r.correctAnswer)}</div>` : ''}
+            </div>
+            <div class="mt-2.5 p-2.5 bg-white rounded-lg border border-slate-200 text-xs sm:text-sm text-slate-700">
+              <strong class="text-blue-700">💡 步驟題解：</strong>${formatMath(r.explanation)}
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('detailedReviewContainer').innerHTML = reviewHtml;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function launchRemediationQuiz() {
+      if (currentMistakes.length === 0) return;
+
+      const followUpQuestions = [];
+      const topicToModuleMap = {
+        '18以內加法': 'p1_add_sub_18',
+        '18以內減法': 'p1_add_sub_18',
+        '100以內兩位數加法': 'p1_num_100',
+        '香港硬幣換值': 'p1_time_money',
+        '平面圖形辨認': 'p1_shape_space',
+        '表內乘法': 'p2_mul_div',
+        '3位數退位減法': 'p2_3digit_calc',
+        '長度單位換算': 'p2_measure_len',
+        '四則混合運算': 'p3_four_ops',
+        '同分母分數概念': 'p3_frac_basic',
+        '容量單位換算': 'p3_measure_units',
+        '八個方向辨認': 'p3_tri_8dir',
+        '同分母分數加法': 'p4_frac_add_sub',
+        '小數加法': 'p4_dec_basic',
+        '因數個數辨認': 'p4_factor_multiple',
+        '長方形面積計算': 'p4_perim_area',
+        '異分母分數加法': 'p5_frac_add_sub',
+        '異分母分數減法': 'p5_frac_add_sub',
+        '分數乘法應用': 'p5_frac_mul_div',
+        '分數除法應用': 'p5_frac_mul_div',
+        '小數四則混合運算': 'p5_dec_calc',
+        '平行四邊形面積': 'p5_area_calc',
+        '三角形面積': 'p5_area_calc',
+        '梯形面積': 'p5_area_calc',
+        '排水法測量不規則立體體積': 'p5_vol_measure',
+        '平均數計算': 'p5_avg_data',
+        '簡易方程解題': 'p5_algebra_intro',
+        '百分數與折扣應用': 'p6_pct_calc',
+        '百分數與賺蝕應用': 'p6_pct_calc',
+        '增減百分率': 'p6_pct_calc',
+        '分數小數百分數混合計算': 'p6_pct_calc',
+        '圓周計算': 'p6_circle_measure',
+        '圓面積計算': 'p6_circle_measure',
+        '半圓形周界計算': 'p6_circle_measure',
+        '速率公式應用': 'p6_speed_graph',
+        '行程距離計算': 'p6_speed_graph',
+        '速率單位換算': 'p6_speed_graph',
+        '帶括號的簡易方程': 'p6_algebra_adv',
+        '含分數的簡易方程': 'p6_algebra_adv',
+        '簡易方程文字應用題': 'p6_algebra_adv',
+        '圓形圖數據分析': 'p6_data_graph',
+        '對稱與立體展開圖': 'p6_shape_symmetry'
+      };
+
+      currentMistakes.forEach((m, idx) => {
+        const modKey = topicToModuleMap[m.topic] || 'p6_pct_calc';
+        const newQ = generateSingleQuestion(m.grade || currentGrade, modKey, idx + 1);
+        newQ.text = `【針對性錯題鞏固練習】` + newQ.text;
+        followUpQuestions.push(newQ);
+      });
+
+      currentQuestions = followUpQuestions;
+      inputModeMap = {};
+
+      document.getElementById('resultArea').classList.add('hidden');
+      document.getElementById('assessmentArea').classList.remove('hidden');
+
+      document.getElementById('assessmentStatusText').innerText = `錯題跟進強化練習 (共 ${followUpQuestions.length} 題)`;
+      document.getElementById('assessmentModuleSub').innerText = '根據剛才測驗中答錯的知識點，自動生成的針對性鞏固題目';
+
+      renderAssessmentQuestions(currentQuestions);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function returnToSelectionHub() {
+      document.getElementById('resultArea').classList.add('hidden');
+      document.getElementById('assessmentArea').classList.add('hidden');
+      document.getElementById('selectionHub').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function copyReportText() {
+      const sName = document.getElementById('studentName').value.trim() || '學生';
+      const sClass = document.getElementById('studentClass').value.trim();
+      const sId = document.getElementById('studentId').value.trim();
+      const score = document.getElementById('scoreDisplay').innerText;
+      const grade = document.getElementById('gradeBandDisplay').innerText;
+
+      const report = `【香港小學數學科在線評估成績報告】\n` +
+        `學生姓名：${sName}\n` +
+        `班別 / 學號：${sClass || '--'} / ${sId || '--'}\n` +
+        `評估年級：${currentGrade}\n` +
+        `測驗總分：${score}\n` +
+        `${grade}\n` +
+        `評估時間：${new Date().toLocaleString('zh-HK')}\n` +
+        `系統網址：GitHub Pages 在線評估版`;
+
+      const dummy = document.createElement('textarea');
+      document.body.appendChild(dummy);
+      dummy.value = report;
+      dummy.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummy);
+
+      showToast('✅ 成績報告文字已複製至剪貼簿！可直接貼在 WhatsApp 或 Google Classroom。', 'success');
+    }
+
+    window.onload = function() {
+      selectGrade('P6');
+    };
+  </script>
+</body>
+</html>
