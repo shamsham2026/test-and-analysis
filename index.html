@@ -5,13 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>香港小學數學科網上智能評估系統 | Primary Math Assessment (P1-P6)</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:ital,wght@1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:ital,wght@1,700&display=swap" rel="stylesheet">
   
   <style>
+    :root {
+      --brand: #1d4ed8;
+      --brand-soft: #eff6ff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --surface: #f1f5f9;
+    }
     body {
-      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #dbeafe 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #e2e8f0 0%, transparent 50%),
+        var(--surface);
+    }
+    .nav-tab.active {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
+      box-shadow: 0 8px 20px rgba(29, 78, 216, 0.2);
+    }
+    .fade-in {
+      animation: fadeIn 0.35s ease both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .progress-grow {
+      transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     }
     
     /* 垂直分數樣式 (Vertical Fraction Layout) */
@@ -53,6 +82,18 @@
       .no-print {
         display: none !important;
       }
+      #mainNav,
+      #selectionHub,
+      #importHub,
+      #recordsHub,
+      #assessmentArea,
+      #toastMessage {
+        display: none !important;
+      }
+      #reportHub:not(.hidden),
+      #resultArea:not(.hidden) {
+        display: block !important;
+      }
       .app-container {
         box-shadow: none !important;
         border: none !important;
@@ -71,21 +112,27 @@
   <div class="app-container max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-5 sm:p-8">
     
     <!-- 頂部標題列 -->
-    <header class="text-center pb-6 mb-6 border-b border-slate-100">
-      <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold mb-3 border border-blue-100">
-        <span>🎒 香港小學數學課程 • 小一至小六 (P1–P6) 全級在線評估</span>
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">小學數學科智能評估與錯題跟進系統</h1>
+    <header class="text-center pb-5 mb-5 border-b border-slate-100">
+      <p class="text-xs sm:text-sm font-semibold tracking-[0.18em] uppercase text-blue-700 mb-2">MathPath HK</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">小學數學科智能評估與分析系統</h1>
       <p class="text-sm sm:text-base text-slate-500 mt-2">
-        涵蓋 數 (N)、度量 (M)、圖形與空間 (S)、數據處理 (D)、代數 (A) • 20 題標準診斷
+        香港課程 P1–P6 · Doc/PDF 題庫匯入 · 年級單元分析 · 學生為本數學報告
       </p>
     </header>
+
+    <!-- 主導覽 -->
+    <nav class="no-print grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6" id="mainNav">
+      <button type="button" class="nav-tab active px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 transition" data-view="selectionHub">評估測驗</button>
+      <button type="button" class="nav-tab px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 transition" data-view="importHub">題庫匯入</button>
+      <button type="button" class="nav-tab px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 transition" data-view="recordsHub">評估紀錄</button>
+      <button type="button" class="nav-tab px-3 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 transition" data-view="reportHub">學生報告</button>
+    </nav>
 
     <!-- 提示訊息 Modal / Toast 容器 -->
     <div id="toastMessage" class="hidden mb-6 p-4 rounded-xl text-sm font-medium transition-all duration-300"></div>
 
     <!-- 1. 主選擇介面 (Selection Hub) -->
-    <section id="selectionHub" class="space-y-6">
+    <section id="selectionHub" class="space-y-6 fade-in view-panel">
       
       <!-- 學生個人資料填寫卡片 -->
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
@@ -137,11 +184,157 @@
         </div>
       </div>
 
+      <!-- 題目來源 -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <label class="block text-sm font-bold text-slate-800 mb-3">3. 題目來源 (Question Source):</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-blue-300">
+            <input type="radio" name="questionSource" value="generated" checked class="mt-1">
+            <span>
+              <span class="block text-sm font-semibold text-slate-800">系統智能出題</span>
+              <span class="block text-xs text-slate-500 mt-0.5">按所選年級／單元自動生成 20 題診斷卷</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-blue-300">
+            <input type="radio" name="questionSource" value="imported" class="mt-1">
+            <span>
+              <span class="block text-sm font-semibold text-slate-800">已匯入題庫</span>
+              <span class="block text-xs text-slate-500 mt-0.5" id="importedBankHint">請先到「題庫匯入」上傳 Doc／PDF／文字卷</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <!-- 開始測驗按鈕 -->
       <button type="button" onclick="startAssessment()" 
               class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base sm:text-lg font-bold rounded-xl shadow-lg shadow-blue-500/25 transition duration-200 flex items-center justify-center gap-2">
-        <span>🎯 開始 20 題標準測驗 (Start 20-Question Assessment)</span>
+        <span>開始 20 題標準測驗</span>
       </button>
+    </section>
+
+    <!-- 1b. 題庫匯入介面 -->
+    <section id="importHub" class="hidden space-y-6 fade-in view-panel">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+        <h2 class="text-base font-bold text-blue-900 mb-2">以 Doc / PDF / 文字檔載入題目</h2>
+        <p class="text-sm text-blue-800 leading-relaxed">
+          支援 <strong>.docx</strong>、<strong>.pdf</strong>、<strong>.txt</strong>。建議按「每個年級 × 每個單元」分別匯入，系統會自動解析題號、答案與解析，並存入本機題庫作之後評估與分析。
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="importGrade">匯入年級</label>
+          <select id="importGrade" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="P1">小一 (P1)</option>
+            <option value="P2">小二 (P2)</option>
+            <option value="P3">小三 (P3)</option>
+            <option value="P4">小四 (P4)</option>
+            <option value="P5">小五 (P5)</option>
+            <option value="P6" selected>小六 (P6)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="importModule">對應單元</label>
+          <select id="importModule" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="importStrand">預設範疇（如題目未標註）</label>
+        <select id="importStrand" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="數 (N)">數 (N)</option>
+          <option value="度量 (M)">度量 (M)</option>
+          <option value="圖形與空間 (S)">圖形與空間 (S)</option>
+          <option value="數據處理 (D)">數據處理 (D)</option>
+          <option value="代數 (A)">代數 (A)</option>
+        </select>
+      </div>
+
+      <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 bg-slate-50 text-center">
+        <input type="file" id="importFileInput" accept=".docx,.pdf,.txt,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold hover:file:bg-blue-700">
+        <p class="text-xs text-slate-500 mt-3">或直接貼上試卷文字於下方，再按「解析並儲存」</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="importTextArea">試卷原文（可編輯）</label>
+        <textarea id="importTextArea" rows="12" placeholder="範例格式：&#10;1. 一件外套原價 200 元，八折出售，售價是多少元？&#10;答案：160&#10;解析：200 × 80% = 160&#10;&#10;2. 計算：120 × 25% = ?&#10;答案：30" class="w-full px-3.5 py-3 bg-white border border-slate-300 rounded-lg text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" onclick="parseAndSaveImportedBank()" class="flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition">解析並儲存至題庫</button>
+        <button type="button" onclick="loadSampleImportText()" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl border border-slate-200 transition">載入格式範例</button>
+      </div>
+
+      <div id="importPreviewBox" class="hidden bg-white border border-slate-200 rounded-xl p-5">
+        <h3 class="text-sm font-bold text-slate-900 mb-3">解析預覽</h3>
+        <div id="importPreviewContent" class="space-y-2 text-sm text-slate-700"></div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-slate-900">本機已匯入題庫</h3>
+          <button type="button" onclick="refreshBankList()" class="text-xs font-semibold text-blue-700 hover:underline">重新整理</button>
+        </div>
+        <div id="bankListContainer" class="space-y-2 text-sm text-slate-700"></div>
+      </div>
+    </section>
+
+    <!-- 1c. 評估紀錄介面 -->
+    <section id="recordsHub" class="hidden space-y-6 fade-in view-panel">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
+        <h2 class="text-base font-bold text-slate-900 mb-2">評估紀錄與單元分析</h2>
+        <p class="text-sm text-slate-600">每次提交都會自動存檔。可按學生、年級、單元篩選，檢視掌握度變化。</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="filterStudent">學生</label>
+          <select id="filterStudent" onchange="renderRecordsTable()" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="filterGrade">年級</label>
+          <select id="filterGrade" onchange="renderRecordsTable()" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">全部年級</option>
+            <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option>
+            <option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="filterModule">單元</label>
+          <select id="filterModule" onchange="renderRecordsTable()" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">全部單元</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button type="button" onclick="exportRecordsCSV()" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-lg transition">匯出 CSV</button>
+        </div>
+      </div>
+
+      <div id="unitSummaryCards" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      <div id="recordsTableContainer" class="overflow-x-auto border border-slate-200 rounded-xl"></div>
+    </section>
+
+    <!-- 1d. 學生為本報告介面 -->
+    <section id="reportHub" class="hidden space-y-6 fade-in view-panel">
+      <div class="no-print bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+        <h2 class="text-base font-bold text-emerald-900 mb-2">學生為本數學分析報告</h2>
+        <p class="text-sm text-emerald-800">整合該生所有評估紀錄，按年級與單元輸出優勢、弱項、學習軌跡與溫習建議；可列印或另存 PDF。</p>
+      </div>
+
+      <div class="no-print grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reportStudentSelect">選擇學生</label>
+          <select id="reportStudentSelect" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"></select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button type="button" onclick="generateStudentReport()" class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition">生成報告</button>
+          <button type="button" onclick="window.print()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-lg transition">列印/PDF</button>
+        </div>
+      </div>
+
+      <div id="studentReportOutput" class="hidden space-y-5">
+        <!-- 動態生成學生報告 -->
+      </div>
     </section>
 
     <!-- 2. 測驗作答進行介面 (Assessment Area) -->
@@ -181,12 +374,25 @@
         </div>
       </div>
 
+      <!-- 學生為本即時診斷 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">學生為本學習診斷</h3>
+        <div id="studentCenteredSummary" class="my-4 text-sm text-slate-700 leading-relaxed space-y-2"></div>
+      </div>
+
+      <!-- 單元／課題掌握度 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+          <span>本單元課題掌握度</span>
+          <span class="text-xs font-normal text-slate-500">按題目課題統計</span>
+        </h3>
+        <div id="topicAnalysisBars" class="space-y-4 my-5"></div>
+      </div>
+
       <!-- 五大範疇得分率長條圖診斷 -->
       <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-sm">
         <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
-          <span class="flex items-center gap-2">
-            <span class="text-xl">📊</span> 數學五大範疇掌握度診斷報告
-          </span>
+          <span>數學五大範疇掌握度診斷</span>
           <span class="text-xs font-normal text-slate-500">標準參照評估</span>
         </h3>
         <div id="strandAnalysisBars" class="space-y-4 my-5">
@@ -295,6 +501,17 @@
     let currentReviewList = [];
     let currentMistakes = [];
     let inputModeMap = {}; // qId -> 'normal' | 'fraction'
+    let lastAssessmentMeta = null;
+    let currentQuestionSource = 'generated';
+
+    const STORAGE_KEYS = {
+      banks: 'mathpath_question_banks_v1',
+      records: 'mathpath_assessment_records_v1'
+    };
+
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
 
     function getRandomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -904,6 +1121,7 @@
       }
 
       renderModuleCards();
+      updateImportedBankHint();
     }
 
     function renderModuleCards() {
@@ -938,6 +1156,7 @@
     function chooseModule(key) {
       currentSelectedModule = key;
       renderModuleCards();
+      updateImportedBankHint();
     }
 
     function startAssessment() {
@@ -948,19 +1167,54 @@
       }
       hideToast();
 
-      currentQuestions = generateQuiz(currentGrade, currentSelectedModule, 20);
-      inputModeMap = {};
+      const sourceRadio = document.querySelector('input[name="questionSource"]:checked');
+      currentQuestionSource = sourceRadio ? sourceRadio.value : 'generated';
 
-      document.getElementById('selectionHub').classList.add('hidden');
+      if (currentQuestionSource === 'imported') {
+        const bank = getBank(currentGrade, currentSelectedModule);
+        if (!bank || !bank.questions || bank.questions.length === 0) {
+          showToast('此年級／單元尚未匯入題庫，請先到「題庫匯入」上載 Doc／PDF，或改用系統出題。', 'error');
+          return;
+        }
+        currentQuestions = pickQuestionsFromBank(bank.questions, 20).map((q, i) => ({
+          ...q,
+          id: q.id || ('IMP_' + Date.now() + '_' + i),
+          grade: q.grade || currentGrade,
+          points: q.points || 5
+        }));
+      } else {
+        currentQuestions = generateQuiz(currentGrade, currentSelectedModule, 20);
+      }
+
+      inputModeMap = {};
+      switchView(null);
       document.getElementById('resultArea').classList.add('hidden');
       document.getElementById('assessmentArea').classList.remove('hidden');
 
       const activeModuleObj = (CURRICULUM_DATA[currentGrade] || []).find(m => m.key === currentSelectedModule);
-      document.getElementById('assessmentStatusText').innerText = `測驗進行中 (${currentGrade} - 共 20 題)`;
-      document.getElementById('assessmentModuleSub').innerText = activeModuleObj ? activeModuleObj.title : '';
+      document.getElementById('assessmentStatusText').innerText = `測驗進行中 (${currentGrade} - 共 ${currentQuestions.length} 題)`;
+      document.getElementById('assessmentModuleSub').innerText =
+        (activeModuleObj ? activeModuleObj.title : '') +
+        (currentQuestionSource === 'imported' ? ' · 來源：已匯入題庫' : ' · 來源：系統出題');
 
       renderAssessmentQuestions(currentQuestions);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function pickQuestionsFromBank(questions, count) {
+      const pool = [...questions];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = getRandomInt(0, i);
+        const tmp = pool[i];
+        pool[i] = pool[j];
+        pool[j] = tmp;
+      }
+      if (pool.length >= count) return pool.slice(0, count);
+      const result = [];
+      while (result.length < count) {
+        result.push(pool[result.length % pool.length]);
+      }
+      return result;
     }
 
     function renderAssessmentQuestions(questions) {
@@ -1170,16 +1424,51 @@
         }
       }
 
-      displayResults({
+      const topicMap = {};
+      reviewList.forEach(r => {
+        const key = r.topic || '未分類課題';
+        if (!topicMap[key]) topicMap[key] = { topic: key, correct: 0, total: 0, strand: r.strand };
+        topicMap[key].total += 1;
+        if (r.isCorrect) topicMap[key].correct += 1;
+      });
+      const topicAnalysis = Object.values(topicMap).map(t => ({
+        ...t,
+        percentage: t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0
+      })).sort((a, b) => a.percentage - b.percentage);
+
+      const strongTopics = topicAnalysis.filter(t => t.percentage >= 80).map(t => t.topic);
+      const weakTopics = topicAnalysis.filter(t => t.percentage < 60).map(t => t.topic);
+
+      const activeModuleObj = (CURRICULUM_DATA[currentGrade] || []).find(m => m.key === currentSelectedModule);
+      const resultPayload = {
         rawScore,
         maxScore,
         percentage: percentage.toFixed(1),
         gradeBand,
         strandAnalysis,
+        topicAnalysis,
         strengths,
         weaknesses,
+        strongTopics,
+        weakTopics,
         reviews: reviewList
-      });
+      };
+
+      lastAssessmentMeta = {
+        id: 'REC_' + Date.now() + '_' + getRandomInt(100, 999),
+        studentName: document.getElementById('studentName').value.trim() || '學生',
+        studentClass: document.getElementById('studentClass').value.trim(),
+        studentId: document.getElementById('studentId').value.trim(),
+        grade: currentGrade,
+        moduleKey: currentSelectedModule,
+        moduleTitle: activeModuleObj ? activeModuleObj.title : currentSelectedModule,
+        date: new Date().toISOString(),
+        source: currentQuestionSource,
+        ...resultPayload
+      };
+      saveAssessmentRecord(lastAssessmentMeta);
+
+      displayResults(resultPayload);
     }
 
     function displayResults(data) {
@@ -1192,7 +1481,43 @@
 
       document.getElementById('scoreDisplay').innerHTML = `${data.rawScore} / ${data.maxScore} <span class="text-2xl font-semibold opacity-85">(${data.percentage}%)</span>`;
       document.getElementById('gradeBandDisplay').innerText = `表現等級：${data.gradeBand}`;
-      document.getElementById('studentDetailTag').innerText = `學生：${sName} ${sClass ? `| 班別：${sClass}` : ''} ${sId ? `| 學號：${sId}` : ''} | 評估年級：${currentGrade}`;
+      const moduleTitle = lastAssessmentMeta ? lastAssessmentMeta.moduleTitle : '';
+      document.getElementById('studentDetailTag').innerText =
+        `學生：${sName} ${sClass ? `| 班別：${sClass}` : ''} ${sId ? `| 學號：${sId}` : ''} | 評估年級：${currentGrade}` +
+        (moduleTitle ? ` | 單元：${moduleTitle}` : '');
+
+      const summaryBox = document.getElementById('studentCenteredSummary');
+      if (summaryBox) {
+        const historyHint = buildStudentHistoryHint(sName, currentGrade, currentSelectedModule, Number(data.percentage));
+        summaryBox.innerHTML = `
+          <p><strong>${sName}</strong> 今次在 <strong>${currentGrade}</strong>「${moduleTitle || '所選單元'}」得分 <strong>${data.percentage}%</strong>，等級為 <strong>${data.gradeBand}</strong>。</p>
+          <p>${data.strongTopics && data.strongTopics.length
+            ? `你已較穩固掌握：<strong>${data.strongTopics.slice(0, 3).join('、')}</strong>。`
+            : '今次尚未出現明顯優勢課題，建議由基礎例題重新建立信心。'}</p>
+          <p>${data.weakTopics && data.weakTopics.length
+            ? `需要優先溫習：<strong>${data.weakTopics.slice(0, 3).join('、')}</strong>。可先完成錯題跟進練習，再重測同一單元。`
+            : '各課題表現均衡，可挑戰同範疇較高階應用題。'}</p>
+          <p class="text-slate-500">${historyHint}</p>
+        `;
+      }
+
+      let topicBars = '';
+      (data.topicAnalysis || []).forEach(t => {
+        const color = t.percentage >= 80 ? 'bg-emerald-500' : (t.percentage >= 60 ? 'bg-blue-500' : 'bg-rose-500');
+        topicBars += `
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold text-slate-700 mb-1">
+              <span>${t.topic} <span class="text-slate-400 font-medium">(${t.strand})</span></span>
+              <span>${t.percentage}% (${t.correct}/${t.total})</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+              <div class="${color} h-3 rounded-full progress-grow" style="width: ${t.percentage}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      const topicContainer = document.getElementById('topicAnalysisBars');
+      if (topicContainer) topicContainer.innerHTML = topicBars || '<p class="text-sm text-slate-500">暫無課題統計</p>';
 
       // 渲染五大範疇長條圖
       let barsHtml = '';
@@ -1205,7 +1530,7 @@
               <span>${s.percentage}% (${s.earned}/${s.total} 分)</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
-              <div class="${color} h-3 rounded-full transition-all duration-700" style="width: ${s.percentage}%"></div>
+              <div class="${color} h-3 rounded-full progress-grow" style="width: ${s.percentage}%"></div>
             </div>
           </div>
         `;
@@ -1213,14 +1538,17 @@
       document.getElementById('strandAnalysisBars').innerHTML = barsHtml;
 
       // 診斷建議
-      let feedback = '<p class="font-bold text-slate-900 mb-1">💡 學習表現診斷與建議：</p>';
+      let feedback = '<p class="font-bold text-slate-900 mb-1">學習表現診斷與建議：</p>';
       if (data.strengths.length > 0) {
-        feedback += `<p class="text-emerald-700 font-medium">✅ <strong>優勢範疇：</strong>你在 <strong>${data.strengths.join('、')}</strong> 掌握扎實，理解準確！</p>`;
+        feedback += `<p class="text-emerald-700 font-medium"><strong>優勢範疇：</strong>你在 <strong>${data.strengths.join('、')}</strong> 掌握扎實，理解準確！</p>`;
       }
       if (data.weaknesses.length > 0) {
-        feedback += `<p class="text-rose-700 font-medium mt-1">⚠️ <strong>待加強範疇：</strong>建議針對 <strong>${data.weaknesses.join('、')}</strong> 進行專項練習與概念強化。</p>`;
+        feedback += `<p class="text-rose-700 font-medium mt-1"><strong>待加強範疇：</strong>建議針對 <strong>${data.weaknesses.join('、')}</strong> 進行專項練習與概念強化。</p>`;
       } else {
-        feedback += `<p class="text-blue-700 font-medium mt-1">🎉 各範疇表現均非常全面均衡，繼續保持！</p>`;
+        feedback += `<p class="text-blue-700 font-medium mt-1">各範疇表現均非常全面均衡，繼續保持！</p>`;
+      }
+      if (data.weakTopics && data.weakTopics.length) {
+        feedback += `<p class="text-slate-700 mt-2"><strong>單元內優先溫習課題：</strong>${data.weakTopics.join('、')}</p>`;
       }
       document.getElementById('diagnosticFeedbackBox').innerHTML = feedback;
 
@@ -1331,7 +1659,7 @@
     function returnToSelectionHub() {
       document.getElementById('resultArea').classList.add('hidden');
       document.getElementById('assessmentArea').classList.add('hidden');
-      document.getElementById('selectionHub').classList.remove('hidden');
+      switchView('selectionHub');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1341,28 +1669,653 @@
       const sId = document.getElementById('studentId').value.trim();
       const score = document.getElementById('scoreDisplay').innerText;
       const grade = document.getElementById('gradeBandDisplay').innerText;
+      const moduleTitle = lastAssessmentMeta ? lastAssessmentMeta.moduleTitle : '';
+      const weak = (lastAssessmentMeta && lastAssessmentMeta.weakTopics) ? lastAssessmentMeta.weakTopics.join('、') : '--';
+      const strong = (lastAssessmentMeta && lastAssessmentMeta.strongTopics) ? lastAssessmentMeta.strongTopics.join('、') : '--';
 
-      const report = `【香港小學數學科在線評估成績報告】\n` +
+      const report = `【香港小學數學科學生為本評估報告】\n` +
         `學生姓名：${sName}\n` +
         `班別 / 學號：${sClass || '--'} / ${sId || '--'}\n` +
         `評估年級：${currentGrade}\n` +
+        `評估單元：${moduleTitle || '--'}\n` +
         `測驗總分：${score}\n` +
         `${grade}\n` +
-        `評估時間：${new Date().toLocaleString('zh-HK')}\n` +
-        `系統網址：GitHub Pages 在線評估版`;
+        `優勢課題：${strong}\n` +
+        `待加強課題：${weak}\n` +
+        `評估時間：${new Date().toLocaleString('zh-HK')}\n`;
 
-      const dummy = document.createElement('textarea');
-      document.body.appendChild(dummy);
-      dummy.value = report;
-      dummy.select();
-      document.execCommand('copy');
-      document.body.removeChild(dummy);
+      navigator.clipboard.writeText(report).then(() => {
+        showToast('成績報告文字已複製至剪貼簿！可直接貼在 WhatsApp 或 Google Classroom。', 'success');
+      }).catch(() => {
+        const dummy = document.createElement('textarea');
+        document.body.appendChild(dummy);
+        dummy.value = report;
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        showToast('成績報告文字已複製至剪貼簿！', 'success');
+      });
+    }
 
-      showToast('✅ 成績報告文字已複製至剪貼簿！可直接貼在 WhatsApp 或 Google Classroom。', 'success');
+    /* =========================================================================
+     * 本機儲存：題庫 + 評估紀錄
+     * ========================================================================= */
+    function loadBanks() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.banks) || '{}'); }
+      catch (_) { return {}; }
+    }
+
+    function saveBanks(banks) {
+      localStorage.setItem(STORAGE_KEYS.banks, JSON.stringify(banks));
+    }
+
+    function bankKey(grade, moduleKey) {
+      return `${grade}::${moduleKey}`;
+    }
+
+    function getBank(grade, moduleKey) {
+      const banks = loadBanks();
+      return banks[bankKey(grade, moduleKey)] || null;
+    }
+
+    function loadRecords() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.records) || '[]'); }
+      catch (_) { return []; }
+    }
+
+    function saveAssessmentRecord(record) {
+      const records = loadRecords();
+      records.unshift(record);
+      localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(records.slice(0, 500)));
+    }
+
+    function buildStudentHistoryHint(studentName, grade, moduleKey, latestPct) {
+      const prev = loadRecords().filter(r =>
+        r.studentName === studentName && r.grade === grade && r.moduleKey === moduleKey
+      );
+      // 目前紀錄已包含今次，取第二筆作對比
+      if (prev.length < 2) return '這是此單元的首次評估紀錄，之後重測可自動比較進步幅度。';
+      const previous = prev[1];
+      const delta = Number(latestPct) - Number(previous.percentage);
+      if (Math.abs(delta) < 0.5) return `與上次同單元相比（${previous.percentage}%）表現相若，建議針對錯題再鞏固。`;
+      if (delta > 0) return `與上次同單元（${previous.percentage}%）相比，進步了 ${delta.toFixed(1)} 百分點，做得好！`;
+      return `與上次同單元（${previous.percentage}%）相比暫時回落 ${Math.abs(delta).toFixed(1)} 百分點，建議先複習弱項課題再測。`;
+    }
+
+    /* =========================================================================
+     * 導覽切換
+     * ========================================================================= */
+    function switchView(viewId) {
+      const panels = ['selectionHub', 'importHub', 'recordsHub', 'reportHub'];
+      panels.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (viewId && id === viewId) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        if (viewId && btn.dataset.view === viewId) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      if (viewId === 'importHub') {
+        populateImportModuleSelect();
+        refreshBankList();
+        updateImportedBankHint();
+      }
+      if (viewId === 'recordsHub') {
+        populateRecordFilters();
+        renderRecordsTable();
+      }
+      if (viewId === 'reportHub') {
+        populateReportStudentSelect();
+      }
+    }
+
+    function setupNavigation() {
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('assessmentArea').classList.add('hidden');
+          document.getElementById('resultArea').classList.add('hidden');
+          switchView(btn.dataset.view);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    /* =========================================================================
+     * Doc / PDF / 文字題庫匯入
+     * ========================================================================= */
+    function populateImportModuleSelect() {
+      const grade = document.getElementById('importGrade').value || 'P6';
+      const select = document.getElementById('importModule');
+      const modules = CURRICULUM_DATA[grade] || [];
+      select.innerHTML = modules.map(m => `<option value="${m.key}">${m.title}</option>`).join('');
+    }
+
+    function updateImportedBankHint() {
+      const bank = getBank(currentGrade, currentSelectedModule);
+      const hint = document.getElementById('importedBankHint');
+      if (!hint) return;
+      if (bank && bank.questions && bank.questions.length) {
+        hint.textContent = `已有 ${bank.questions.length} 題（${bank.sourceName || '匯入題庫'}）可用於本單元`;
+      } else {
+        hint.textContent = '請先到「題庫匯入」上傳 Doc／PDF／文字卷';
+      }
+    }
+
+    function loadSampleImportText() {
+      document.getElementById('importTextArea').value =
+`1. 一件外套原價 200 元，百貨公司現以八折出售，售價是多少元？
+答案：160
+解析：售價 = 200 × 80% = 160 元。
+
+2. 文具店購入書包成本 120 元，打算賺取 25% 利潤出售，售價是多少元？
+答案：150
+解析：售價 = 120 × (1 + 25%) = 150 元。
+
+3. 某校去年有學生 400 人，今年增加至 460 人。增加了百分之幾？（只輸入數字）
+答案：15
+解析：增加百分率 = (460-400)/400 × 100% = 15%。
+
+4. 計算：80 × 25% + 15 = ?
+答案：35
+解析：80 × 0.25 = 20，再加 15 = 35。
+
+5. 原價 360 元的商品七五折後售價是多少元？
+答案：270
+解析：360 × 75% = 270 元。`;
+      showToast('已載入百分數單元範例文字，可直接解析或按需要修改。', 'success');
+    }
+
+    async function extractTextFromFile(file) {
+      const name = (file.name || '').toLowerCase();
+      if (name.endsWith('.txt') || file.type === 'text/plain') {
+        return await file.text();
+      }
+      if (name.endsWith('.docx') || file.type.includes('wordprocessingml')) {
+        if (!window.mammoth) throw new Error('Word 解析元件未能載入');
+        const buffer = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
+        return result.value || '';
+      }
+      if (name.endsWith('.pdf') || file.type === 'application/pdf') {
+        if (!window.pdfjsLib) throw new Error('PDF 解析元件未能載入');
+        const buffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(' ');
+          text += pageText + '\n';
+        }
+        return text;
+      }
+      throw new Error('暫不支援此檔案格式，請使用 .docx / .pdf / .txt');
+    }
+
+    function parseQuestionBankText(rawText, meta) {
+      const text = String(rawText || '').replace(/\r/g, '').trim();
+      if (!text) return [];
+
+      // 以題號切段：1. / 1、 / 第1題 / (1)
+      const chunks = text.split(/(?:^|\n)\s*(?:第\s*)?(\d+)\s*[.、．:：)]\s+/).filter(Boolean);
+      const questions = [];
+
+      // split 後可能呈現 [num, body, num, body...] 或純正文
+      if (chunks.length >= 2 && /^\d+$/.test(chunks[0])) {
+        for (let i = 0; i < chunks.length - 1; i += 2) {
+          const body = (chunks[i + 1] || '').trim();
+          if (!body) continue;
+          const parsed = parseSingleImportedQuestion(body, meta, questions.length + 1);
+          if (parsed) questions.push(parsed);
+        }
+      } else {
+        // 後備：雙空行分段
+        text.split(/\n\s*\n/).forEach((block, idx) => {
+          const parsed = parseSingleImportedQuestion(block.trim(), meta, idx + 1);
+          if (parsed) questions.push(parsed);
+        });
+      }
+      return questions;
+    }
+
+    function parseSingleImportedQuestion(body, meta, index) {
+      if (!body || body.length < 3) return null;
+      let working = body;
+
+      let explanation = '';
+      const expMatch = working.match(/(?:解析|題解|詳解|Explanation)\s*[:：]\s*([\s\S]+)$/i);
+      if (expMatch) {
+        explanation = expMatch[1].trim();
+        working = working.slice(0, expMatch.index).trim();
+      }
+
+      let correctAnswer = '';
+      const ansMatch = working.match(/(?:答案|參考答案|正確答案|Answer)\s*[:：]\s*(.+)$/im);
+      if (ansMatch) {
+        correctAnswer = ansMatch[1].trim().split(/\n/)[0].trim();
+        working = working.slice(0, ansMatch.index).trim();
+      }
+
+      let strand = meta.strand;
+      let topic = meta.moduleTitle || '匯入課題';
+      // 支援：題幹前綴「數 (N)｜百分數」
+      const prefix = working.match(/^(數\s*\(N\)|度量\s*\(M\)|圖形與空間\s*\(S\)|數據處理\s*\(D\)|代數\s*\(A\))\s*[｜|/]\s*([^\n]+)\n/);
+      if (prefix) {
+        strand = prefix[1].replace(/\s+/g, ' ');
+        topic = prefix[2].trim();
+        working = working.slice(prefix[0].length).trim();
+      }
+
+      const questionText = working.replace(/\n+/g, ' ').trim();
+      if (!questionText) return null;
+
+      return {
+        id: 'IMP_' + meta.grade + '_' + Date.now() + '_' + index,
+        grade: meta.grade,
+        strand: strand,
+        topic: topic,
+        text: questionText,
+        correctAnswer: correctAnswer || '(教師請補上答案)',
+        points: 5,
+        explanation: explanation || '請參閱課本題解或向老師查詢步驟。',
+        imported: true
+      };
+    }
+
+    async function handleImportFileChange(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        showToast(`正在讀取 ${file.name} …`, 'success');
+        const text = await extractTextFromFile(file);
+        document.getElementById('importTextArea').value = text.trim();
+        showToast(`已從「${file.name}」提取文字，請檢查後按「解析並儲存」。`, 'success');
+      } catch (err) {
+        showToast(err.message || '讀取檔案失敗', 'error');
+      }
+    }
+
+    function parseAndSaveImportedBank() {
+      const grade = document.getElementById('importGrade').value;
+      const moduleKey = document.getElementById('importModule').value;
+      const strand = document.getElementById('importStrand').value;
+      const raw = document.getElementById('importTextArea').value.trim();
+      const moduleObj = (CURRICULUM_DATA[grade] || []).find(m => m.key === moduleKey);
+      const moduleTitle = moduleObj ? moduleObj.title : moduleKey;
+
+      if (!raw) {
+        showToast('請先上傳檔案或貼上試卷文字。', 'error');
+        return;
+      }
+
+      const questions = parseQuestionBankText(raw, { grade, strand, moduleTitle });
+      if (!questions.length) {
+        showToast('未能解析到題目。請確認題號格式（如 1. 或 1、）並包含「答案：」。', 'error');
+        return;
+      }
+
+      const banks = loadBanks();
+      const key = bankKey(grade, moduleKey);
+      const fileInput = document.getElementById('importFileInput');
+      const sourceName = (fileInput.files && fileInput.files[0] && fileInput.files[0].name) || '手動貼上文字';
+
+      banks[key] = {
+        grade,
+        moduleKey,
+        moduleTitle,
+        strand,
+        sourceName,
+        importedAt: new Date().toISOString(),
+        questions
+      };
+      saveBanks(banks);
+
+      const preview = document.getElementById('importPreviewBox');
+      const previewContent = document.getElementById('importPreviewContent');
+      preview.classList.remove('hidden');
+      previewContent.innerHTML = questions.slice(0, 8).map((q, i) =>
+        `<div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+          <div class="font-semibold text-slate-800">第 ${i + 1} 題 · ${q.strand} · ${q.topic}</div>
+          <div class="mt-1">${formatMath(q.text)}</div>
+          <div class="mt-1 text-emerald-700">答案：${formatAnswerDisplay(q.correctAnswer)}</div>
+        </div>`
+      ).join('') + (questions.length > 8 ? `<p class="text-xs text-slate-500">…共 ${questions.length} 題已儲存</p>` : '');
+
+      refreshBankList();
+      updateImportedBankHint();
+      showToast(`已儲存 ${questions.length} 題至 ${grade} / ${moduleTitle}`, 'success');
+    }
+
+    function refreshBankList() {
+      const container = document.getElementById('bankListContainer');
+      if (!container) return;
+      const banks = loadBanks();
+      const entries = Object.values(banks);
+      if (!entries.length) {
+        container.innerHTML = '<p class="text-slate-500">尚未匯入任何題庫。</p>';
+        return;
+      }
+      container.innerHTML = entries.map(b => `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50">
+          <div>
+            <div class="font-semibold text-slate-800">${b.grade} · ${b.moduleTitle}</div>
+            <div class="text-xs text-slate-500 mt-0.5">${b.questions.length} 題 · 來源：${b.sourceName || '--'} · ${new Date(b.importedAt).toLocaleString('zh-HK')}</div>
+          </div>
+          <button type="button" onclick="deleteBank('${b.grade}','${b.moduleKey}')" class="text-xs font-semibold text-rose-700 hover:underline">刪除</button>
+        </div>
+      `).join('');
+    }
+
+    function deleteBank(grade, moduleKey) {
+      const banks = loadBanks();
+      delete banks[bankKey(grade, moduleKey)];
+      saveBanks(banks);
+      refreshBankList();
+      updateImportedBankHint();
+      showToast('已刪除該題庫。', 'success');
+    }
+
+    /* =========================================================================
+     * 評估紀錄與單元分析
+     * ========================================================================= */
+    function populateRecordFilters() {
+      const records = loadRecords();
+      const studentSelect = document.getElementById('filterStudent');
+      const moduleSelect = document.getElementById('filterModule');
+      const names = [...new Set(records.map(r => r.studentName))].sort();
+      studentSelect.innerHTML = '<option value="">全部學生</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+
+      const modules = [];
+      Object.keys(CURRICULUM_DATA).forEach(g => {
+        CURRICULUM_DATA[g].forEach(m => modules.push({ key: m.key, title: `${g} · ${m.title}` }));
+      });
+      moduleSelect.innerHTML = '<option value="">全部單元</option>' + modules.map(m => `<option value="${m.key}">${m.title}</option>`).join('');
+    }
+
+    function renderRecordsTable() {
+      const records = loadRecords();
+      const student = document.getElementById('filterStudent').value;
+      const grade = document.getElementById('filterGrade').value;
+      const moduleKey = document.getElementById('filterModule').value;
+
+      const filtered = records.filter(r =>
+        (!student || r.studentName === student) &&
+        (!grade || r.grade === grade) &&
+        (!moduleKey || r.moduleKey === moduleKey)
+      );
+
+      // 單元摘要
+      const unitMap = {};
+      filtered.forEach(r => {
+        const key = `${r.grade}::${r.moduleKey}`;
+        if (!unitMap[key]) {
+          unitMap[key] = { grade: r.grade, moduleTitle: r.moduleTitle, count: 0, sum: 0, latest: r.percentage };
+        }
+        unitMap[key].count += 1;
+        unitMap[key].sum += Number(r.percentage);
+      });
+      const summary = document.getElementById('unitSummaryCards');
+      const unitList = Object.values(unitMap).sort((a, b) => (a.sum / a.count) - (b.sum / b.count));
+      summary.innerHTML = unitList.length ? unitList.slice(0, 6).map(u => {
+        const avg = (u.sum / u.count).toFixed(1);
+        const tone = avg >= 80 ? 'border-emerald-300 bg-emerald-50' : (avg >= 60 ? 'border-blue-200 bg-blue-50' : 'border-rose-200 bg-rose-50');
+        return `<div class="p-4 rounded-xl border ${tone}">
+          <div class="text-xs font-semibold text-slate-500">${u.grade}</div>
+          <div class="text-sm font-bold text-slate-900 mt-1 leading-snug">${u.moduleTitle}</div>
+          <div class="text-sm mt-2">平均掌握度 <strong>${avg}%</strong> · ${u.count} 次評估 · 最近 ${u.latest}%</div>
+        </div>`;
+      }).join('') : '<p class="text-sm text-slate-500 sm:col-span-2">尚無符合條件的評估紀錄。</p>';
+
+      const table = document.getElementById('recordsTableContainer');
+      if (!filtered.length) {
+        table.innerHTML = '<p class="p-4 text-sm text-slate-500">暫無紀錄。完成一次評估後會自動儲存。</p>';
+        return;
+      }
+      table.innerHTML = `
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-100 text-slate-700">
+            <tr>
+              <th class="text-left px-3 py-2 font-semibold">時間</th>
+              <th class="text-left px-3 py-2 font-semibold">學生</th>
+              <th class="text-left px-3 py-2 font-semibold">年級</th>
+              <th class="text-left px-3 py-2 font-semibold">單元</th>
+              <th class="text-left px-3 py-2 font-semibold">得分</th>
+              <th class="text-left px-3 py-2 font-semibold">等級</th>
+              <th class="text-left px-3 py-2 font-semibold">弱項課題</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.slice(0, 80).map(r => `
+              <tr class="border-t border-slate-100 hover:bg-slate-50">
+                <td class="px-3 py-2 whitespace-nowrap">${new Date(r.date).toLocaleString('zh-HK')}</td>
+                <td class="px-3 py-2">${r.studentName}${r.studentClass ? ' · ' + r.studentClass : ''}</td>
+                <td class="px-3 py-2">${r.grade}</td>
+                <td class="px-3 py-2 max-w-xs">${r.moduleTitle || r.moduleKey}</td>
+                <td class="px-3 py-2 font-semibold">${r.percentage}%</td>
+                <td class="px-3 py-2">${r.gradeBand}</td>
+                <td class="px-3 py-2">${(r.weakTopics || []).slice(0, 2).join('、') || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function exportRecordsCSV() {
+      const records = loadRecords();
+      if (!records.length) {
+        showToast('沒有可匯出的紀錄。', 'error');
+        return;
+      }
+      const header = ['日期', '學生', '班別', '學號', '年級', '單元', '得分百分比', '等級', '來源', '弱項課題'];
+      const rows = records.map(r => [
+        new Date(r.date).toLocaleString('zh-HK'),
+        r.studentName,
+        r.studentClass || '',
+        r.studentId || '',
+        r.grade,
+        r.moduleTitle || r.moduleKey,
+        r.percentage,
+        r.gradeBand,
+        r.source || '',
+        (r.weakTopics || []).join('；')
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+      const csv = '\uFEFF' + [header.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mathpath-records-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('已匯出 CSV 檔案。', 'success');
+    }
+
+    /* =========================================================================
+     * 學生為本數學分析報告
+     * ========================================================================= */
+    function populateReportStudentSelect() {
+      const select = document.getElementById('reportStudentSelect');
+      const names = [...new Set(loadRecords().map(r => r.studentName))].sort();
+      if (!names.length) {
+        select.innerHTML = '<option value="">（尚未有評估紀錄）</option>';
+        return;
+      }
+      select.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
+
+    function generateStudentReport() {
+      const studentName = document.getElementById('reportStudentSelect').value;
+      const output = document.getElementById('studentReportOutput');
+      if (!studentName) {
+        showToast('請先選擇學生。', 'error');
+        return;
+      }
+      const records = loadRecords().filter(r => r.studentName === studentName);
+      if (!records.length) {
+        showToast('此學生沒有評估紀錄。', 'error');
+        return;
+      }
+
+      const latest = records[0];
+      const byUnit = {};
+      const byGrade = {};
+      const topicWeakCount = {};
+      const topicStrongCount = {};
+
+      records.forEach(r => {
+        const uk = `${r.grade}::${r.moduleKey}`;
+        if (!byUnit[uk]) byUnit[uk] = { grade: r.grade, moduleTitle: r.moduleTitle, scores: [], weakTopics: [] };
+        byUnit[uk].scores.push(Number(r.percentage));
+        (r.weakTopics || []).forEach(t => byUnit[uk].weakTopics.push(t));
+
+        if (!byGrade[r.grade]) byGrade[r.grade] = [];
+        byGrade[r.grade].push(Number(r.percentage));
+
+        (r.weakTopics || []).forEach(t => { topicWeakCount[t] = (topicWeakCount[t] || 0) + 1; });
+        (r.strongTopics || []).forEach(t => { topicStrongCount[t] = (topicStrongCount[t] || 0) + 1; });
+      });
+
+      const unitRows = Object.values(byUnit).map(u => {
+        const avg = u.scores.reduce((a, b) => a + b, 0) / u.scores.length;
+        const trend = u.scores.length >= 2 ? u.scores[0] - u.scores[u.scores.length - 1] : 0;
+        return { ...u, avg, trend, latest: u.scores[0] };
+      }).sort((a, b) => a.avg - b.avg);
+
+      const overallAvg = (records.reduce((s, r) => s + Number(r.percentage), 0) / records.length).toFixed(1);
+      const topWeak = Object.entries(topicWeakCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const topStrong = Object.entries(topicStrongCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const priorityUnits = unitRows.filter(u => u.avg < 70).slice(0, 3);
+      const strengthUnits = unitRows.filter(u => u.avg >= 80).slice(0, 3);
+
+      const narrative = buildStudentNarrative({
+        studentName, latest, overallAvg, records, priorityUnits, strengthUnits, topWeak, topStrong
+      });
+
+      output.classList.remove('hidden');
+      output.innerHTML = `
+        <article class="bg-white border border-slate-200 rounded-xl p-5 sm:p-7 space-y-5">
+          <header class="border-b border-slate-100 pb-4">
+            <p class="text-xs font-semibold tracking-[0.16em] uppercase text-blue-700">MathPath HK · 學生為本數學分析報告</p>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">${studentName}</h3>
+            <p class="text-sm text-slate-500 mt-1">
+              ${latest.studentClass ? '班別：' + latest.studentClass + ' · ' : ''}${latest.studentId ? '學號：' + latest.studentId + ' · ' : ''}
+              報告生成：${new Date().toLocaleString('zh-HK')} · 共 ${records.length} 次評估
+            </p>
+          </header>
+
+          <section>
+            <h4 class="text-sm font-bold text-slate-900 mb-2">一、整體學習畫像</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200"><div class="text-xs text-slate-500">平均掌握度</div><div class="text-2xl font-bold text-slate-900">${overallAvg}%</div></div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200"><div class="text-xs text-slate-500">最近一次</div><div class="text-2xl font-bold text-slate-900">${latest.percentage}%</div><div class="text-xs text-slate-500 mt-1">${latest.grade} · ${latest.moduleTitle}</div></div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200"><div class="text-xs text-slate-500">評估次數</div><div class="text-2xl font-bold text-slate-900">${records.length}</div></div>
+            </div>
+            <div class="text-sm text-slate-700 leading-relaxed space-y-2">${narrative}</div>
+          </section>
+
+          <section class="page-break">
+            <h4 class="text-sm font-bold text-slate-900 mb-2">二、按年級／單元掌握度</h4>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="min-w-full text-sm">
+                <thead class="bg-slate-100"><tr>
+                  <th class="text-left px-3 py-2">年級</th>
+                  <th class="text-left px-3 py-2">單元</th>
+                  <th class="text-left px-3 py-2">次數</th>
+                  <th class="text-left px-3 py-2">平均</th>
+                  <th class="text-left px-3 py-2">最近</th>
+                  <th class="text-left px-3 py-2">趨勢</th>
+                </tr></thead>
+                <tbody>
+                  ${unitRows.map(u => `
+                    <tr class="border-t border-slate-100">
+                      <td class="px-3 py-2">${u.grade}</td>
+                      <td class="px-3 py-2">${u.moduleTitle}</td>
+                      <td class="px-3 py-2">${u.scores.length}</td>
+                      <td class="px-3 py-2 font-semibold">${u.avg.toFixed(1)}%</td>
+                      <td class="px-3 py-2">${u.latest}%</td>
+                      <td class="px-3 py-2">${u.scores.length < 2 ? '—' : (u.trend >= 0 ? '↑ +' + u.trend.toFixed(1) : '↓ ' + u.trend.toFixed(1))}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <h4 class="text-sm font-bold text-slate-900 mb-2">三、優勢與待加強課題</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50">
+                <div class="font-bold text-emerald-900 mb-2">優勢課題</div>
+                ${topStrong.length ? `<ul class="list-disc pl-5 space-y-1 text-emerald-900">${topStrong.map(([t, c]) => `<li>${t}（出現 ${c} 次穩健表現）</li>`).join('')}</ul>` : '<p class="text-emerald-800">資料尚少，完成更多單元評估後會更清晰。</p>'}
+              </div>
+              <div class="p-4 rounded-xl border border-rose-200 bg-rose-50">
+                <div class="font-bold text-rose-900 mb-2">待加強課題</div>
+                ${topWeak.length ? `<ul class="list-disc pl-5 space-y-1 text-rose-900">${topWeak.map(([t, c]) => `<li>${t}（${c} 次評估中偏弱）</li>`).join('')}</ul>` : '<p class="text-rose-800">暫无明显弱項，保持定期重測。</p>'}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h4 class="text-sm font-bold text-slate-900 mb-2">四、個人化溫習建議</h4>
+            <ol class="list-decimal pl-5 text-sm text-slate-700 space-y-2 leading-relaxed">
+              ${priorityUnits.length
+                ? priorityUnits.map(u => `<li>優先重溫 <strong>${u.grade} · ${u.moduleTitle}</strong>（平均 ${u.avg.toFixed(1)}%）。建議先做該單元錯題跟進，再以匯入卷或系統卷重測。</li>`).join('')
+                : '<li>各單元平均表現尚可，可選一個優勢單元挑戰較高階應用題，鞏固遷移能力。</li>'}
+              ${topWeak[0] ? `<li>本週聚焦課題「<strong>${topWeak[0][0]}</strong>」：每日 5–8 題，連續 3 日後再評估一次。</li>` : ''}
+              <li>完成重測後回到「評估紀錄」查看同單元趨勢；進步超過 10 百分點可視為達標。</li>
+              <li>家長／老師可將本報告列印或「另存 PDF」，放入學習歷程檔。</li>
+            </ol>
+          </section>
+
+          <section>
+            <h4 class="text-sm font-bold text-slate-900 mb-2">五、近期評估時間線</h4>
+            <ul class="space-y-2 text-sm">
+              ${records.slice(0, 8).map(r => `
+                <li class="p-3 rounded-lg border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span>${new Date(r.date).toLocaleString('zh-HK')} · ${r.grade} · ${r.moduleTitle}</span>
+                  <span class="font-semibold">${r.percentage}% · ${r.gradeBand}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </section>
+        </article>
+      `;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('已生成學生為本數學分析報告，可按「列印/PDF」匯出。', 'success');
+    }
+
+    function buildStudentNarrative(ctx) {
+      const { studentName, latest, overallAvg, records, priorityUnits, strengthUnits, topWeak, topStrong } = ctx;
+      const parts = [];
+      parts.push(`<p><strong>${studentName}</strong> 至今共完成 <strong>${records.length}</strong> 次數學評估，整體平均掌握度為 <strong>${overallAvg}%</strong>。最近一次於 <strong>${latest.grade}</strong>「${latest.moduleTitle}」取得 <strong>${latest.percentage}%</strong>（${latest.gradeBand}）。</p>`);
+      if (strengthUnits.length) {
+        parts.push(`<p>相對穩定的單元包括：${strengthUnits.map(u => `「${u.grade} · ${u.moduleTitle}」（平均 ${u.avg.toFixed(1)}%）`).join('、')}。這些可作為建立成功經驗的起點。</p>`);
+      }
+      if (priorityUnits.length) {
+        parts.push(`<p>需要重點支援的單元為：${priorityUnits.map(u => `「${u.grade} · ${u.moduleTitle}」（平均 ${u.avg.toFixed(1)}%）`).join('、')}。建議以「小步子、高頻回饋」方式重練，而非一次操大量綜合卷。</p>`);
+      } else {
+        parts.push('<p>目前未見持續偏低的單元，學習狀態整體健康；可開始安排跨單元綜合應用以提升解難靈活性。</p>');
+      }
+      if (topWeak.length && topStrong.length) {
+        parts.push(`<p>課題層面，較常表現良好的是「${topStrong[0][0]}」，而較需跟進的是「${topWeak[0][0]}」。溫習時宜先連繫已知概念，再切入易錯步驟。</p>`);
+      }
+      return parts.join('');
     }
 
     function init() {
+      setupNavigation();
       selectGrade('P6');
+      populateImportModuleSelect();
+      document.getElementById('importGrade').addEventListener('change', populateImportModuleSelect);
+      document.getElementById('importFileInput').addEventListener('change', handleImportFileChange);
+
+      updateImportedBankHint();
+      switchView('selectionHub');
     }
 
     if (document.readyState === 'loading') {
