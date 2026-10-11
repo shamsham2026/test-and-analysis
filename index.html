@@ -1825,8 +1825,20 @@
 
 5. 原價 360 元的商品七五折後售價是多少元？
 答案：270
-解析：360 × 75% = 270 元。`;
-      showToast('已載入百分數單元範例文字，可直接解析或按需要修改。', 'success');
+解析：360 × 75% = 270 元。
+
+6. 一件玩具成本 80 元，售價 100 元，賺取的百分率是多少？（只輸入數字）
+答案：25
+解析：賺幅 = (100-80)/80 × 100% = 25%。
+
+7. 計算：240 × 50% = ?
+答案：120
+解析：240 × 0.5 = 120。
+
+8. 原價 500 元九折後再減 20 元，最後售價多少元？
+答案：430
+解析：500 × 90% = 450，再減 20 = 430 元。`;
+      showToast('已載入百分數單元範例文字（8 題），可直接解析或按需要修改。', 'success');
     }
 
     async function extractTextFromFile(file) {
@@ -1857,8 +1869,14 @@
     }
 
     function parseQuestionBankText(rawText, meta) {
-      const text = String(rawText || '').replace(/\r/g, '').trim();
+      let text = String(rawText || '').replace(/\r/g, '').trim();
       if (!text) return [];
+
+      // PDF 常把多題擠成單行：在題號前強制換行，方便切段
+      text = text
+        .replace(/(答案|參考答案|正確答案|Answer)\s*[:：]\s*/gi, '\n答案：')
+        .replace(/(解析|題解|詳解|Explanation)\s*[:：]\s*/gi, '\n解析：')
+        .replace(/(?:^|[\s\n])(?:第\s*)?(\d{1,2})\s*[.、．:：)]\s+/g, '\n$1. ');
 
       // 以題號切段：1. / 1、 / 第1題 / (1)
       const chunks = text.split(/(?:^|\n)\s*(?:第\s*)?(\d+)\s*[.、．:：)]\s+/).filter(Boolean);
